@@ -1,0 +1,38 @@
+GLOBALS:
+
+AGENTS:
+ - Cleaner 
+    own: bateria; capacidade
+	
+	 - nasce canto inferior
+	 - bateria carregada com um valor ajustavel
+	 - a cada mov "bateria" perde 1 unidade
+	 - quando encontra residuo, limpa e armazena
+	 - "capacidade" é ajustável
+	 
+ - Polluters
+    own: prob_sujar
+
+	 - podem "entrar no espaço aleatoriamente"	
+	 - residuos de tipos diferentes (cores diferente cleaner = cor residuo diferente)
+	 - residuo depositado só em células limpas
+     - cada polluter tem prob_sujar diferente (atribuida utilizador por sliders) 
+	
+	Turtles (both)
+	 - deslocam-se mas apenas ao percecionar as adjacentes
+	 - 1 tick por movimento
+
+Patches
+ - Superficie onde se movimentam
+
+	Patch(-16,-16)
+	 - é o posto de carregamento
+	 - tempo de carregamento é ajustável
+	 
+	Container (Patch Aleatorio)
+	 - nº ajustavel (2-10)
+	 - localização aleatoria 	
+	
+	
+	 
+	
