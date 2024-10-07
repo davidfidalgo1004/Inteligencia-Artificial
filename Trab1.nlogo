@@ -1,76 +1,109 @@
 breed[cleaners cleaner]
 breed[polluters polluter]
+
 globals [contaminacao limpeza_espaco]
 cleaners-own [battery]
 polluters-own [prob_dirty cor]
 
 to setup
   clear-all
-
-  ask patches[
-    set pcolor 39
+  ask patches [
+    set pcolor 68  ;; Cor de fundo padrão
   ]
+
+  ;; Lista para armazenar os patches já pintados
+  let painted-patches []
+
+  ;; Pintar patches aleatórios e garantir que não sejam repetidos
+  repeat number_containers [
+    let random-patch one-of patches with [not member? self painted-patches]
+    ask random-patch [
+      set pcolor orange
+    ]
+    set painted-patches lput random-patch painted-patches  ;; Adicionar o patch à lista dos já pintados
+  ]
+
+  ;; Definir as posições de canto para os cleaners
   let corner-positions [[-16 -16] [16 -16] [-16 16] [16 16]]
 
+  ;; Criar os cleaners, evitando que comecem em patches já pintados
   create-cleaners number_cleanners [
     set shape "aspirador"
     set size 3.5
     set battery 100
-    ;; Definir as posições dos cantos para cada cleaner
     let corner-position item who corner-positions
     setxy item 0 corner-position item 1 corner-position
     set label-color black
     set label battery
+    ;; Verificar se o cleaner está em um patch pintado e reposicionar se necessário
+    while [pcolor = orange] [
+      move-to one-of patches with [pcolor != orange]
+    ]
   ]
 
-
+  ;; Criar os polluters, garantindo que não se sobreponham com patches pintados
   create-polluters number_cows [
     set shape "cow"
     setxy random-pxcor random-pycor
     set size 3
-
+    ;; Verificar se o polluter está em um patch pintado e reposicionar se necessário
+    while [pcolor = orange] [
+      move-to one-of patches with [pcolor != orange]
+    ]
     ;; Atribuir cores baseadas no "who" (dividido por 3)
     if who mod 3 = 0 [ set color green  set cor "verde" ]
     if who mod 3 = 1 [ set color yellow set cor "amarelo" ]
     if who mod 3 = 2 [ set color blue   set cor "azul" ]
   ]
+
   ask cleaners [
     show (word "Cleaner ID: " who)
   ]
+
   ask polluters [
     show (word "Polluter ID: " who)
   ]
+
   reset-ticks
   set contaminacao 0
   set limpeza_espaco 0
 end
 
+
 to go_once
   ask polluters with [cor = "azul"] [
   if random-float 1 < cowblue_pollution [
+      if [pcolor] of patch-here = 68 [
     ;; O patch onde o poluidor está será colorido de azul
     ask patch-here [
       set pcolor blue
     ]
   ]
+    ]
   rt random 360  ;; Rotaciona o agente em uma direção aleatória
   fd 1           ;; Move o agente para frente
   ]
   ask polluters with [cor = "amarelo"] [
+    if [pcolor] of patch-here = 68 [
     if random-float 1 < cowyellow_pollution [
     ;; O patch onde o poluidor está será colorido de azul
     ask patch-here [
       set pcolor yellow
     ]
   ]
+  ]
     rt random 360
     fd 1
   ]
   ask polluters with [cor = "verde"] [
-    if random-float 1 < cowgreen_pollution [
-    ;; O patch onde o poluidor está será colorido de azul
-    ask patch-here [
-      set pcolor green
+    if [pcolor] of patch-here = 68 [
+      ;; Ações a serem executadas se o patch for da cor desejada
+
+      if random-float 1 < cowgreen_pollution [
+        ;; O patch onde o poluidor está será colorido de azul
+        ask patch-here [
+          set pcolor green
+        ]
     ]
   ]
     rt random 360
@@ -94,7 +127,6 @@ to go_n
   ]
 
 end
-
 
 
 @#$#@#$#@
@@ -126,9 +158,9 @@ ticks
 30.0
 
 BUTTON
-699
+595
 10
-780
+676
 67
 Setup
 Setup
@@ -143,10 +175,10 @@ NIL
 1
 
 BUTTON
-699
-80
-780
-125
+593
+81
+674
+126
 Go_once
 go_once
 NIL
@@ -160,10 +192,10 @@ NIL
 1
 
 BUTTON
-699
-146
-781
-192
+590
+136
+672
+182
 Go_N
 go_n
 NIL
@@ -190,25 +222,6 @@ movimentos
 1
 NIL
 HORIZONTAL
-
-PLOT
-273
-276
-473
-426
-plot 1
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot count contaminacao"
-"pen-1" 1.0 0 -7500403 true "" "plot count limpeza_espaco"
 
 SLIDER
 7
@@ -279,7 +292,7 @@ number_cleanners
 number_cleanners
 1
 4
-2.0
+3.0
 1
 1
 NIL
@@ -292,24 +305,72 @@ SLIDER
 180
 number_cows
 number_cows
-3
-9
-6.0
+1
+15
+13.0
 3
 1
 NIL
 HORIZONTAL
 
 MONITOR
-28
-284
-210
-329
-NIL
+695
+179
+797
+224
+Cleaner 1 Battery
 [battery] of cleaner 0
 17
 1
 11
+
+MONITOR
+695
+233
+798
+278
+Cleaner 2 Battery
+[battery] of cleaner 1
+17
+1
+11
+
+MONITOR
+692
+287
+798
+332
+Cleaner 3 Battery
+[battery] of cleaner 2
+17
+1
+11
+
+MONITOR
+694
+343
+798
+388
+Cleaner 4 Battery
+[battery] of cleaner 3
+17
+1
+11
+
+SLIDER
+4
+252
+176
+285
+number_containers
+number_containers
+2
+10
+2.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
