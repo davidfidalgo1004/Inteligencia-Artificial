@@ -25,7 +25,8 @@ to setup
   set depositos []
   ask patches [
     set i count patches with [pcolor = blue]
-    if pcolor = cor_chao and i < num_depositos and one-of [pcolor] of neighbors4 != blue[;; nao há depositos juntos (fica confuso)
+    ask patch 0 0[set pcolor blue]
+    if pcolor = cor_chao and i < num_depositos and one-of [pcolor] of neighbors4 = blue [
       show [pcolor] of neighbors4
       set pcolor blue
       set depositos fput (list pxcor pycor) depositos

@@ -249,7 +249,7 @@ SLIDER
 cleaner_max_battery
 cleaner_max_battery
 0
-100
+1000
 100.0
 1
 1
@@ -413,7 +413,7 @@ INPUTBOX
 243
 512
 battery_loss
-1.0
+0.1
 1
 0
 Number

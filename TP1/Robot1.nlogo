@@ -249,8 +249,8 @@ SLIDER
 cleaner_max_battery
 cleaner_max_battery
 0
-100
-100.0
+1000
+1000.0
 1
 1
 NIL
@@ -276,7 +276,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 0
 1000
-920.0
+60.0
 1
 1
 NIL
