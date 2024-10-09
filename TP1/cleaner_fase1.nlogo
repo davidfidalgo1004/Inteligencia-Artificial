@@ -1,5 +1,5 @@
 ;; globals
-globals[posto_carregamento depositos]
+globals[cor_chao posto_carregamento depositos]
 breed[cleaners cleaner]
 breed[polluters polluter]
 cleaners-own[battery capacity recharge_time last_cleaning_location]
@@ -9,14 +9,26 @@ polluters-own[prob_sujar]
 to setup
   clear-all
   reset-ticks
+  set cor_chao 39
   ask patches[
-    set pcolor 39
+    set pcolor cor_chao
   ]
   set posto_carregamento [-16 -16]
   ask patch item 0 posto_carregamento item 1 posto_carregamento[;; caso mude tamanho do world
     set pcolor black
   ]
-  set depositos (list random-pxcor random-pycor) ;;; faz 2 a 10 depositos
+
+  ;;criacao de depositos
+  ;; para n depositos verifica se a cor e 39 e muda a cor para x
+  ;; preciso selecionar 6 patches e mudar lhes a cor se eles forem cor 38
+  let i 1
+  ask patches [
+    set i count patches with [pcolor = blue]
+    if pcolor = cor_chao and i < num_depositos[
+      set pcolor blue
+    ]
+  ]
+
 
   ;;padrões do dicionário do netlogo
   create-cleaners 1;
@@ -89,7 +101,7 @@ to go_once
               ifelse last_cleaning_location != [0 0][
                 facexy item 0 last_cleaning_location item 1 last_cleaning_location
               ][
-              ;; logica de virar quando bate em algo para cobrir terreno desconhecido (crédito ideia: https://youtu.be/O7ozptNs1FY?si=MSywmYDwbmLPsnCb )
+              ;; logica de virar quando bate em algo para cobrir terreno desconhecido (retirado de: https://youtu.be/O7ozptNs1FY?si=MSywmYDwbmLPsnCb )
                 if patch-ahead 1 = nobody[set heading random 360]
               ]
               fd 1
@@ -122,7 +134,7 @@ to go_once
       if (random 100 < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
         let tipo_lixo [32.5 42.5 52.5];tipos de lixo
         ask patch-here[
-          if pcolor = 39[ ; se estiver em chao
+          if pcolor = cor_chao[ ; se estiver em chao
             set pcolor ( item (random 3) tipo_lixo) ;random para as cores/tipos de lixo (random 3; 0 1 2)
           ]
         ]
@@ -208,7 +220,7 @@ cleaner_max_battery
 cleaner_max_battery
 0
 100
-39.0
+100.0
 1
 1
 NIL
@@ -371,7 +383,7 @@ INPUTBOX
 243
 512
 battery_loss
-0.01
+1.0
 1
 0
 Number
