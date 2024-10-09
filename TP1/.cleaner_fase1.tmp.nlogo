@@ -366,10 +366,10 @@ n
 Number
 
 INPUTBOX
-167
-452
-243
-512
+970
+116
+1046
+176
 battery_loss
 0.01
 1
@@ -377,10 +377,10 @@ battery_loss
 Number
 
 MONITOR
-274
-461
-412
-506
+171
+463
+309
+508
 Cleaner - Capacidade
 [capacity] of cleaner 0
 17
@@ -407,15 +407,15 @@ PENS
 "Limpo" 1.0 1 -2570826 true "" "plot count patches with [pcolor = 38]"
 
 SLIDER
-429
-466
-536
-499
+400
+492
+621
+525
 num_depositos
 num_depositos
 2
 10
-6.0
+4.0
 1
 1
 NIL

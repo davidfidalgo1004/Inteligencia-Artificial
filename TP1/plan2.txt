@@ -38,4 +38,4 @@ Comandos para parte 2:
 	scale-color	
 	n-values
 	range
-	
+	seed
