@@ -48,7 +48,7 @@ to setup
   ]
 
   ask polluters[
-    set shape "square"
+    set shape "cow"
     set size 1.5
     set color pink
     set label-color black
@@ -276,7 +276,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 0
 1000
-920.0
+1000.0
 1
 1
 NIL

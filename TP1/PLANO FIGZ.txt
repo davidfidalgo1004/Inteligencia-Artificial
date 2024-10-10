@@ -4,3 +4,6 @@
 7-9 Pesa 10
 -Meter potencia na bateria 
 -Melhorar os containers (DESIGN, SE AS BOSTINHAS PODEM TER QUALQUER COR)
+-Quando vai carregar, continua a limpar
+-Meter mais polluters
+-O cleanner ter modos (O modo safe para poupar bateria, o modo normal é o que está e o modo pro que tem laser, se der para implementar)
