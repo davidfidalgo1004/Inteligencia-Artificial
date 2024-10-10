@@ -1,0 +1,6 @@
+-Cada bosta tem uma intensidade de cor, e essa intensidade de cor é visto pela unidade, quanto menor, maior a intensidade, maior o peso:
+0-2 Pesa 100
+3-6 Pesa 50
+7-9 Pesa 10
+-Meter potencia na bateria 
+-Melhorar os containers (DESIGN, SE AS BOSTINHAS PODEM TER QUALQUER COR)

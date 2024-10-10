@@ -25,8 +25,7 @@ to setup
   set depositos []
   ask patches [
     set i count patches with [pcolor = blue]
-    ask patch 0 0[set pcolor blue]
-    if pcolor = cor_chao and i < num_depositos and one-of [pcolor] of neighbors4 = blue [
+    if pcolor = cor_chao and i < num_depositos and one-of [pcolor] of neighbors4 != blue[;; nao há depositos juntos (fica confuso)
       show [pcolor] of neighbors4
       set pcolor blue
       set depositos fput (list pxcor pycor) depositos
@@ -49,7 +48,7 @@ to setup
   ]
 
   ask polluters[
-    set shape "square"
+    set shape "squar"
     set size 1.5
     set color pink
     set label-color black
@@ -277,7 +276,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 0
 1000
-920.0
+1000.0
 1
 1
 NIL
