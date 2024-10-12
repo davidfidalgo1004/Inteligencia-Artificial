@@ -48,7 +48,7 @@ to setup
   ]
 
   ask polluters[
-    set shape "square"
+    set shape "cow"
     set size 1.5
     set color pink
     set label-color black
@@ -107,9 +107,7 @@ to go_once
               set last_cleaning_location (list round xcor round ycor)
               if ticks > tick_bug_fix [set last_cleaning_location [-15 -15] set tick_bug_fix tick_bug_fix + 10000]; senao ele fica la em cima e nao volta.... porque nao tem movimentos random suficiente para voltar para baixo
             ]
-            facexy item 0 posto_carregamento item 1 posto_carregamento
-            fd 1
-            set battery battery - battery_loss
+            facexy item 0 posto_carregamento item 1 posto_carregamento ;; código direcçao à bateria
           ][
             ifelse capacity >= cleaner_max_capacity[
               ;; modo ir depositar
@@ -132,7 +130,8 @@ to go_once
                 if patch-ahead 1 = nobody[set heading random 360]
               ]
             ]
-            fd 1
+          ]
+            fd 0.5
             set battery battery - battery_loss
             if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
             if capacity < cleaner_max_capacity[
@@ -153,12 +152,11 @@ to go_once
       ]
     ]
   ]
-]
   ;;ações dos polluters
   ask polluters[
     ;;movimento
-    set heading random 360
-    fd 1
+    if patch-ahead 1 = nobody[set heading random 360]
+    fd 0.7
     ;;sujar ou não sujar, eis a questão
     ask polluters[
       if (random 100 < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
@@ -249,8 +247,8 @@ SLIDER
 cleaner_max_battery
 cleaner_max_battery
 0
-1000
-1000.0
+100
+100.0
 1
 1
 NIL
@@ -306,7 +304,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.16
+0.01
 0.01
 1
 NIL
@@ -321,7 +319,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-0.18
+0.0
 0.01
 1
 NIL
@@ -336,7 +334,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-0.18
+0.0
 0.01
 1
 NIL
@@ -413,7 +411,7 @@ INPUTBOX
 243
 512
 battery_loss
-1.0
+0.01
 1
 0
 Number
