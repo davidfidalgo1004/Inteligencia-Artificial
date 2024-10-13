@@ -274,7 +274,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 0
 1000
-60.0
+136.0
 1
 1
 NIL
@@ -304,7 +304,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.01
+0.0
 0.01
 1
 NIL
@@ -440,11 +440,11 @@ Sujo
 0.0
 1024.0
 true
-false
+true
 "" ""
 PENS
-"Sujo" 1.0 1 -14333415 true "" "plot count patches with [pcolor = 32.5 ]"
-"Limpo" 1.0 1 -2570826 true "" "plot count patches with [pcolor = 38]"
+"Sujo" 1.0 2 -5298144 true "" "plot count patches with [pcolor != 39 ]"
+"Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = 39]"
 
 SLIDER
 429
@@ -455,7 +455,7 @@ num_depositos
 num_depositos
 2
 10
-3.0
+10.0
 1
 1
 NIL
