@@ -1,17 +1,61 @@
 ;; globals
-globals[cor_chao posto_carregamento depositos tick_bug_fix]
+globals[cor_chao posto_carregamento depositos tick_bug_fix tipo_lixo]
 breed[cleaners cleaner]
 breed[polluters polluter]
 breed[containers container]
-cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_consumption_battery]
+cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_consumption_battery Cleaner_Potencia_Battery]
 polluters-own[prob_sujar]
 
 to Config_Battery
+
   ask cleaners[
+    if Cleaner_Modo = "Eco Mode" [
+      ;; comportamento para o modo Eco
+      set Cleaner_Potencia_Battery 10
+    ]
+    if Cleaner_Modo = "Medium Mode" [
+      ;; comportamento para o modo Médio
+      set Cleaner_Potencia_Battery 30
+    ]
+    if Cleaner_Modo = "Full Mode" [
+      ;; comportamento para o modo Full
+      set Cleaner_Potencia_Battery 50
+    ]
     set cleaner_consumption_battery (Cleaner_Potencia_Battery / Cleaner_Tensão_Battery) / 60
-    set cleaner_consumption_battery (cleaner_consumption_battery * 1000 / cleaner_capacity_battery)
+    set cleaner_consumption_battery (cleaner_consumption_battery * 100 / (cleaner_capacity_battery / 1000))
+    set cleaner_consumption_battery  ((capacity / 1000) * cleaner_consumption_battery) / 10 + cleaner_consumption_battery
+
+
+
+
+
   ]
 
+end
+
+to Config_Polluters
+  let in 12.5
+  let it 0
+  let en 17.5
+
+  while [it < 13] [
+    ;; Adiciona o intervalo atual [in, en] à lista
+    let atual in
+    while [atual <= en] [
+       set tipo_lixo sentence tipo_lixo (list atual)
+      set atual atual + 0.5
+    ]
+
+
+    ;; Atualiza os valores de in e en
+    set in in + 10
+    set en en + 10
+
+    ;; Incrementa o contador i
+    set it it + 1
+  ]
+  set tipo_lixo but-first tipo_lixo
+  show tipo_lixo
 end
 
 ;setup, cujo programa permita: limpar o ambiente; criar e introduzir no mundo os agentes e fazer o reset do tempo.
@@ -19,7 +63,7 @@ to setup
   clear-all
   reset-ticks
   set tick_bug_fix 10000 ; de 10000 em 10000 ticks reset da last_cleaning location senao ele pode ficar preso num loop de ir de ponta a ponta
-
+  Config_Polluters
   set cor_chao 8.5
   ask patches[
     set pcolor cor_chao
@@ -119,14 +163,14 @@ to go_once
       ][
         ;;1º verificar a bateria (modelo Robot1 dirige-se ao posto quando chega a uma certa percentagem)
         ask cleaners[
-          ifelse battery <= 50 * cleaner_consumption_battery[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
+          ifelse battery <= 46 * cleaner_consumption_battery[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
             if last_cleaning_location = [0 0][;; aspirador guarda sitio onde estava a aspirar até ter de ir carregar bateria
               set last_cleaning_location (list round xcor round ycor)
               if ticks > tick_bug_fix [set last_cleaning_location [-15 -15] set tick_bug_fix tick_bug_fix + 10000]; senao ele fica la em cima e nao volta.... porque nao tem movimentos random suficiente para voltar para baixo
             ]
             facexy item 0 posto_carregamento item 1 posto_carregamento ;; código direcçao à bateria
           ][
-            ifelse capacity >= cleaner_max_capacity[
+            ifelse capacity + 100 >= cleaner_max_capacity[
               ;; modo ir depositar
               ifelse [pcolor] of patch-here = blue[
                 set capacity 0 ;; esvazia capacidade toda (ia melhorar mas melhor guardar para fase 2
@@ -148,18 +192,32 @@ to go_once
               ]
             ]
           ]
-            fd 0.5
+            fd 1
             set battery battery - cleaner_consumption_battery
             if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
             if capacity < cleaner_max_capacity[
-              ask patch-here[
-                ;;encontrar residuo
-                if pcolor != cor_chao and pcolor != black and pcolor != blue[ ;se estiver em cima de lixo
-                  set pcolor cor_chao ; limpa
-                  ask cleaners[
-                    set capacity capacity + 1 ; armazena (if de segurança)
+              ask patch-here [
+              ;; Verifica se o patch atual não tem cor de chão, não é preto e não é azul
+              if pcolor != cor_chao and pcolor != black and pcolor != blue [
+                let cor_lixo pcolor
+                let cod_cor (cor_lixo mod 10)
+                ask cleaners [
+                  if cod_cor >= 2.5 and cod_cor <= 3.5 and cleaner_max_capacity >= capacity + 20[  ; Verifica se o código da cor está no intervalo desejado
+                    set capacity capacity + 20  ; Armazena a capacidade, simulando que o cleaner está limpando
+                    set pcolor cor_chao           ; Limpa o patch, mudando a cor para cor_chao
+                  ]
+                  if cod_cor >= 4 and cod_cor <= 6 and cleaner_max_capacity >= capacity + 10[  ; Verifica se o código da cor está no intervalo desejado
+                    set capacity capacity + 10  ; Armazena a capacidade, simulando que o cleaner está limpando
+                    set pcolor cor_chao           ; Limpa o patch, mudando a cor para cor_chao
+                  ]
+                  if cod_cor >= 6.5 and cod_cor <= 7.5 and cleaner_max_capacity >= capacity + 5[  ; Verifica se o código da cor está no intervalo desejado
+                    set capacity capacity + 5  ; Armazena a capacidade, simulando que o cleaner está limpando
+                    set pcolor cor_chao           ; Limpa o patch, mudando a cor para cor_chao
                   ]
                 ]
+              ]
+            ]
+
               ]
             ];;fim encontrar residuo
 
@@ -168,19 +226,18 @@ to go_once
         ;ask neighbors [ set pcolor red ];; pinta area vizinha vermelho (debug)
       ]
     ]
-  ]
+
   ;;ações dos polluters
   ask polluters[
     ;;movimento
     if patch-ahead 1 = nobody[set heading random 360]
-    fd 0.7
+    fd 1
     ;;sujar ou não sujar, eis a questão
     ask polluters[
       if (random 100 < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
-        let tipo_lixo [32.5 42.5 52.5];tipos de lixo
         ask patch-here[
           if pcolor = cor_chao[ ; se estiver em chao
-            set pcolor ( item (random 3) tipo_lixo) ;random para as cores/tipos de lixo (random 3; 0 1 2)
+            set pcolor ( item (random (length tipo_lixo)) tipo_lixo)
           ]
         ]
       ]
@@ -289,12 +346,12 @@ SLIDER
 210
 cleaner_max_capacity
 cleaner_max_capacity
-0
-1000
-136.0
+300
+2000
+1970.0
+10
 1
-1
-NIL
+gr
 HORIZONTAL
 
 SLIDER
@@ -321,7 +378,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -336,7 +393,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -351,7 +408,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -368,10 +425,10 @@ tempo carregamento:\ndo min ao max de bateria\n
 1
 
 TEXTBOX
-694
-135
-972
-191
+691
+120
+855
+180
 Mudar \"cleaner_max_battery\" enquanto o aspirador trabalha pode prender o aspirador numa rota específica 
 11
 0.0
@@ -422,17 +479,6 @@ n
 0
 Number
 
-INPUTBOX
-167
-452
-243
-512
-battery_loss
-1.0
-1
-0
-Number
-
 MONITOR
 261
 460
@@ -460,8 +506,8 @@ true
 true
 "" ""
 PENS
-"Sujo" 1.0 2 -5298144 true "" "plot count patches with [pcolor != 39 ]"
-"Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = 39]"
+"Sujo" 1.0 2 -5298144 true "" "plot count patches with [pcolor != 8.5 ]"
+"Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = 8.5]"
 
 SLIDER
 429
@@ -486,8 +532,8 @@ SLIDER
 cleaner_capacity_battery
 cleaner_capacity_battery
 2000
-5000
-3200.0
+5500
+5500.0
 10
 1
 mA
@@ -513,26 +559,32 @@ Cleaner_Tensão_Battery
 Cleaner_Tensão_Battery
 14
 18
-14.8
+18.0
 0.1
 1
 V
 HORIZONTAL
 
-SLIDER
-893
-285
-1097
-318
-Cleaner_Potencia_Battery
-Cleaner_Potencia_Battery
-10
-50
-45.0
+CHOOSER
+897
+135
+1105
+180
+Cleaner_Modo
+Cleaner_Modo
+"Eco Mode" "Medium Mode" "Full Mode"
+2
+
+MONITOR
+895
+276
+1133
+321
+Potencia Cleaner (em watts)
+[Cleaner_Potencia_Battery] of cleaner 0
 2
 1
-W
-HORIZONTAL
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
