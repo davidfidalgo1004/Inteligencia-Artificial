@@ -2,21 +2,17 @@
 globals[cor_chao posto_carregamento depositos tick_bug_fix]
 breed[cleaners cleaner]
 breed[polluters polluter]
+breed[containers container]
 cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_consumption_battery]
 polluters-own[prob_sujar]
 
 to Config_Battery
   ask cleaners[
-    set cleaner_consumption_battery (Cleaner_Potencia_Battery * 60 / Cleaner_Tensão_Battery)
-    set cleaner_consumption_battery (cleaner_consumption_battery * 100 / cleaner_capacity_battery)
+    set cleaner_consumption_battery (Cleaner_Potencia_Battery / Cleaner_Tensão_Battery) / 60
+    set cleaner_consumption_battery (cleaner_consumption_battery * 1000 / cleaner_capacity_battery)
   ]
 
 end
-
-
-
-
-
 
 ;setup, cujo programa permita: limpar o ambiente; criar e introduzir no mundo os agentes e fazer o reset do tempo.
 to setup
@@ -24,7 +20,7 @@ to setup
   reset-ticks
   set tick_bug_fix 10000 ; de 10000 em 10000 ticks reset da last_cleaning location senao ele pode ficar preso num loop de ir de ponta a ponta
 
-  set cor_chao 39
+  set cor_chao 8.5
   ask patches[
     set pcolor cor_chao
   ]
@@ -38,10 +34,12 @@ to setup
   set depositos []
   ask patches [
     set i count patches with [pcolor = blue]
-    if pcolor = cor_chao and i < num_depositos and one-of [pcolor] of neighbors4 != blue[;; nao há depositos juntos (fica confuso)
-      show [pcolor] of neighbors4
-      set pcolor blue
-      set depositos fput (list pxcor pycor) depositos
+    if pcolor = cor_chao and i < num_depositos[;; evitar depositos juntos (fica confuso)
+      if all? neighbors4 [pcolor = cor_chao] [
+        show [pcolor] of neighbors4
+        set pcolor blue
+        set depositos fput (list pxcor pycor) depositos
+      ]
     ]
   ]
 
@@ -49,6 +47,7 @@ to setup
   ;;padrões do dicionário do netlogo
   create-cleaners 1;
   create-polluters 3;
+  create-containers num_depositos
 
   ask cleaners[
     set shape "vaccum"
@@ -70,6 +69,9 @@ to setup
     set label who
     setxy random-pxcor random-pycor
   ]
+
+
+
 end
 
 ;go_once, cujo programa permita: que os agentes circulem no mundo de forma aleatória (um só tick);
@@ -78,7 +80,7 @@ to go_once
   ask polluter 1 [set prob_sujar polluter_1_prob_sujar]
   ask polluter 2 [set prob_sujar polluter_2_prob_sujar]
   ask polluter 3 [set prob_sujar polluter_3_prob_sujar]
-
+  Config_Battery
   ;;ask polluters [show prob_sujar];; (debug)
 
   ;;atualizar depositos
@@ -117,7 +119,7 @@ to go_once
       ][
         ;;1º verificar a bateria (modelo Robot1 dirige-se ao posto quando chega a uma certa percentagem)
         ask cleaners[
-          ifelse battery <= 50 * battery_loss[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
+          ifelse battery <= 50 * cleaner_consumption_battery[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
             if last_cleaning_location = [0 0][;; aspirador guarda sitio onde estava a aspirar até ter de ir carregar bateria
               set last_cleaning_location (list round xcor round ycor)
               if ticks > tick_bug_fix [set last_cleaning_location [-15 -15] set tick_bug_fix tick_bug_fix + 10000]; senao ele fica la em cima e nao volta.... porque nao tem movimentos random suficiente para voltar para baixo
@@ -147,7 +149,7 @@ to go_once
             ]
           ]
             fd 0.5
-            set battery battery - battery_loss
+            set battery battery - cleaner_consumption_battery
             if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
             if capacity < cleaner_max_capacity[
               ask patch-here[
@@ -319,7 +321,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.15
+1.0
 0.01
 1
 NIL
@@ -334,7 +336,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -349,7 +351,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -426,7 +428,7 @@ INPUTBOX
 243
 512
 battery_loss
-0.01
+1.0
 1
 0
 Number
@@ -485,7 +487,7 @@ cleaner_capacity_battery
 cleaner_capacity_battery
 2000
 5000
-3510.0
+3200.0
 10
 1
 mA
@@ -511,7 +513,7 @@ Cleaner_Tensão_Battery
 Cleaner_Tensão_Battery
 14
 18
-14.5
+14.8
 0.1
 1
 V
@@ -526,7 +528,7 @@ Cleaner_Potencia_Battery
 Cleaner_Potencia_Battery
 10
 50
-38.0
+45.0
 2
 1
 W
