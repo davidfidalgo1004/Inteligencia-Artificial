@@ -1,9 +1,9 @@
 ;; globals
-globals[cor_chao posto_carregamento depositos tick_bug_fix tipo_lixo]
+globals[cor_chao posto_carregamento depositos tick_bug_fix tipo_lixo num_polluters cleaner_max_battery]
 breed[cleaners cleaner]
 breed[polluters polluter]
 breed[containers container]
-cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_consumption_battery Cleaner_Potencia_Battery]
+cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_consumption_battery cleaner_potencia_battery]
 polluters-own[prob_sujar]
 
 to Config_Battery
@@ -11,24 +11,19 @@ to Config_Battery
   ask cleaners[
     if Cleaner_Modo = "Eco Mode" [
       ;; comportamento para o modo Eco
-      set Cleaner_Potencia_Battery 10
+      set cleaner_potencia_battery 10
     ]
     if Cleaner_Modo = "Medium Mode" [
       ;; comportamento para o modo Médio
-      set Cleaner_Potencia_Battery 30
+      set cleaner_potencia_battery 33
     ]
     if Cleaner_Modo = "Full Mode" [
       ;; comportamento para o modo Full
-      set Cleaner_Potencia_Battery 50
+      set cleaner_potencia_battery 50
     ]
-    set cleaner_consumption_battery (Cleaner_Potencia_Battery / Cleaner_Tensão_Battery) / 60
-    set cleaner_consumption_battery (cleaner_consumption_battery * 100 / (cleaner_capacity_battery / 1000))
-    set cleaner_consumption_battery  ((capacity / 1000) * cleaner_consumption_battery) / 10 + cleaner_consumption_battery
-
-
-
-
-
+    let cleaner_corrente_battery (cleaner_potencia_battery / cleaner_tensao_battery) * 1000;; isto é a corrente em mA
+    let cleaner_ma_segundo_battery cleaner_corrente_battery / 3600 ;; aqui o gasto de mA por segundo
+    set cleaner_consumption_battery (cleaner_ma_segundo_battery / cleaner_capacity_battery) * 100
   ]
 
 end
@@ -40,8 +35,9 @@ to setup
   clear-all
   reset-ticks
   set tick_bug_fix 10000 ; de 10000 em 10000 ticks reset da last_cleaning location senao ele pode ficar preso num loop de ir de ponta a ponta
-  set tipo_lixo [22.5 23 23.5 24 24.5 25 25.5 26 26.5 27 27.5 32.5 33 33.5 34 34.5 35 35.5 36 36.5 37 37.5 112.5 113 113.5 114 114.5 115 115.5 116 116.5 117 117.5]
+  set tipo_lixo (list (range 2.5 7.5 0.5)(range 32.5 37.5 0.5)(range 52.5 57.5 0.5))
   set cor_chao 8.5
+  set cleaner_max_battery 100
   ask patches[
     set pcolor cor_chao
   ]
@@ -50,32 +46,15 @@ to setup
     set pcolor black
   ]
 
-  ;;criacao de depositos
-  let i 1
-  set depositos []
-  ask patches [
-    set i count patches with [pcolor = blue]
-    if pcolor = cor_chao and i < num_depositos[;; evitar depositos juntos (fica confuso)
-      if all? neighbors4 [pcolor = cor_chao] [
-        show [pcolor] of neighbors4
-        set pcolor blue
-        set depositos fput (list pxcor pycor) depositos
-      ]
-    ]
-  ]
-
-
   ;;padrões do dicionário do netlogo
-  create-cleaners 1;
-  create-polluters 3;
-  create-containers num_depositos
+  create-cleaners 1
+  create-polluters 3
 
   ask cleaners[
     set shape "vaccum"
-    set size 3.5
-
-    ;;origem do cleaner (posto de carregamento)
-    setxy -16 -16
+    set size 3
+    let canto_inferior_esquerdo (list min-pxcor min-pycor) ; origem do cleaner (posto de carregamento)
+    setxy (item 0 canto_inferior_esquerdo ) (item 1 canto_inferior_esquerdo) ;; criado no canto inferior esquerdo
     set battery 100
     set capacity 0
     set last_cleaning_location [0 0]
@@ -84,23 +63,45 @@ to setup
 
   ask polluters[
     set shape "cow"
-    set size 1.5
-    set color pink
+    set size 2.5
+    set color white
     set label-color black
     set label who
     setxy random-pxcor random-pycor
   ]
+  ask polluter 1 [ set color 5 ]
+  ask polluter 2 [ set color 35 ]
+  ask polluter 3 [ set color 55 ]
 
+  ;;criacao de depositos
+  let i 1
+  set depositos []
+  ask patches [
+    set i count patches with [pcolor = blue]
+    if pcolor = cor_chao and i < num_depositos[;; evitar depositos juntos (fica confuso)
+      if all? neighbors4 [pcolor = cor_chao] [
+        set pcolor blue
+        sprout-containers 1
+        set depositos fput (list pxcor pycor) depositos
+      ]
+    ]
+  ]
 
-
+  ask containers[
+    set shape "garbage can"
+    set size 2
+    set color grey
+  ]
 end
 
 ;go_once, cujo programa permita: que os agentes circulem no mundo de forma aleatória (um só tick);
 to go_once
   ;;atualizar probabilidades dos sliders
-  ask polluter 1 [set prob_sujar polluter_1_prob_sujar]
-  ask polluter 2 [set prob_sujar polluter_2_prob_sujar]
-  ask polluter 3 [set prob_sujar polluter_3_prob_sujar]
+  ask polluters[
+    if color = 5  [set prob_sujar polluter_1_prob_sujar]
+    if color = 35 [set prob_sujar polluter_2_prob_sujar]
+    if color = 55 [set prob_sujar polluter_3_prob_sujar]
+  ]
   Config_Battery
   ;;ask polluters [show prob_sujar];; (debug)
 
@@ -111,9 +112,15 @@ to go_once
     if pcolor = cor_chao and i < num_depositos[
       set pcolor blue
       set depositos fput (list pxcor pycor) depositos
+      sprout-containers 1 [
+        set shape "garbage can"
+        set size 2
+        set color grey
+      ]
     ]
     if i > num_depositos and pcolor = blue[
       set pcolor cor_chao
+      ask containers-here[die]
       set depositos remove (list pxcor pycor) depositos
     ]
   ]
@@ -155,7 +162,7 @@ to go_once
                 let target-patch min-one-of (patches in-radius 40 with [pcolor = blue]) [distance myself] ;;(apenas esta linha é)solucao stackoverflow :"https://stackoverflow.com/questions/36019543/turtles-move-to-nearest-patch-of-a-certain-color-how-can-this-process-be-sped"
                 if target-patch != nobody[
                   ask cleaner cleaner_atual[
-                    face target-patch ;;; direcionar para o
+                    face target-patch ;;; direcionar para o deposito
                   ]
                 ]
               ]
@@ -173,36 +180,33 @@ to go_once
             set battery battery - cleaner_consumption_battery
             if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
             if capacity < cleaner_max_capacity[
-              ask patch-here [
-              ;; Verifica se o patch atual não tem cor de chão, não é preto e não é azul
+            ask patch-here [
               if pcolor != cor_chao and pcolor != black and pcolor != blue [
                 let cor_lixo pcolor
                 let cod_cor (cor_lixo mod 10)
                 ask cleaners [
-                  if cod_cor >= 2.5 and cod_cor <= 3.5 and cleaner_max_capacity >= capacity + 20[  ; Verifica se o código da cor está no intervalo desejado
-                    set capacity capacity + 20  ; Armazena a capacidade, simulando que o cleaner está limpando
-                    set pcolor cor_chao           ; Limpa o patch, mudando a cor para cor_chao
+                  if cod_cor >= 2.5 and cod_cor <= 3.5 and cleaner_max_capacity >= capacity + 3[
+                    set capacity capacity + 3
+                    set pcolor cor_chao
                   ]
-                  if cod_cor >= 4 and cod_cor <= 6 and cleaner_max_capacity >= capacity + 10[  ; Verifica se o código da cor está no intervalo desejado
-                    set capacity capacity + 10  ; Armazena a capacidade, simulando que o cleaner está limpando
-                    set pcolor cor_chao           ; Limpa o patch, mudando a cor para cor_chao
+                  if cod_cor >= 4 and cod_cor <= 6 and cleaner_max_capacity >= capacity + 2[
+                    set capacity capacity + 2
+                    set pcolor cor_chao
                   ]
-                  if cod_cor >= 6.5 and cod_cor <= 7.5 and cleaner_max_capacity >= capacity + 5[  ; Verifica se o código da cor está no intervalo desejado
-                    set capacity capacity + 5  ; Armazena a capacidade, simulando que o cleaner está limpando
-                    set pcolor cor_chao           ; Limpa o patch, mudando a cor para cor_chao
+                  if cod_cor >= 6.5 and cod_cor <= 7.5 and cleaner_max_capacity >= capacity + 1[
+                    set capacity capacity + 1
+                    set pcolor cor_chao
                   ]
                 ]
               ]
             ]
-
-              ]
-            ];;fim encontrar residuo
-
           ]
-        ;ask patch-here [set pcolor red]; pinta area vizinha vermelho (debug)
-        ;ask neighbors [ set pcolor red ];; pinta area vizinha vermelho (debug)
+        ];;fim encontrar residuo
       ]
+      ;ask patch-here [set pcolor red]; pinta area vizinha vermelho (debug)
+      ;ask neighbors [ set pcolor red ];; pinta area vizinha vermelho (debug)
     ]
+  ]
 
   ;;ações dos polluters
   ask polluters[
@@ -212,9 +216,14 @@ to go_once
     ;;sujar ou não sujar, eis a questão
     ask polluters[
       if (random 100 < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
+        let conjunto_cor [0]
+        if color = 5  [set conjunto_cor item 0 tipo_lixo]
+        if color = 35 [set conjunto_cor item 1 tipo_lixo]
+        if color = 55 [set conjunto_cor item 2 tipo_lixo]
         ask patch-here[
           if pcolor = cor_chao[ ; se estiver em chao
-            set pcolor ( item (random (length tipo_lixo)) tipo_lixo)
+            let tom_de_cor_rand item (random (length conjunto_cor)) conjunto_cor
+            set pcolor tom_de_cor_rand
           ]
         ]
       ]
@@ -290,21 +299,6 @@ NIL
 NIL
 1
 
-SLIDER
-471
-133
-686
-166
-cleaner_max_battery
-cleaner_max_battery
-0
-100
-100.0
-1
-1
-NIL
-HORIZONTAL
-
 MONITOR
 11
 462
@@ -324,11 +318,11 @@ SLIDER
 cleaner_max_capacity
 cleaner_max_capacity
 300
-2000
-1970.0
+500
+300.0
 10
 1
-gr
+ml
 HORIZONTAL
 
 SLIDER
@@ -340,7 +334,7 @@ cleaner_tempo_carregamento
 cleaner_tempo_carregamento
 1
 100
-48.0
+50.0
 1
 1
 ticks
@@ -355,7 +349,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.11
+0.06
 0.01
 1
 NIL
@@ -370,7 +364,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-0.0
+0.06
 0.01
 1
 NIL
@@ -385,31 +379,11 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-0.0
+0.06
 0.01
 1
 NIL
 HORIZONTAL
-
-TEXTBOX
-697
-225
-821
-267
-tempo carregamento:\ndo min ao max de bateria\n
-11
-0.0
-1
-
-TEXTBOX
-691
-120
-855
-180
-Mudar \"cleaner_max_battery\" enquanto o aspirador trabalha pode prender o aspirador numa rota específica 
-11
-0.0
-1
 
 BUTTON
 658
@@ -457,10 +431,10 @@ n
 Number
 
 MONITOR
-261
-460
-399
-505
+176
+462
+314
+507
 Cleaner - Capacidade
 [capacity] of cleaner 0
 17
@@ -487,10 +461,10 @@ PENS
 "Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = 8.5]"
 
 SLIDER
-429
-466
-536
-499
+340
+470
+447
+503
 num_depositos
 num_depositos
 2
@@ -504,16 +478,16 @@ HORIZONTAL
 SLIDER
 892
 192
-1108
+1118
 225
 cleaner_capacity_battery
 cleaner_capacity_battery
-2000
+1500
 5500
-5500.0
+1800.0
 10
 1
-mA
+mAh
 HORIZONTAL
 
 MONITOR
@@ -523,7 +497,7 @@ MONITOR
 367
 Consumo Cleaner em percentagem (por ticks)
 [cleaner_consumption_battery] of cleaner 0
-3
+10
 1
 11
 
@@ -532,11 +506,11 @@ SLIDER
 239
 1098
 272
-Cleaner_Tensão_Battery
-Cleaner_Tensão_Battery
+cleaner_tensao_battery
+cleaner_tensao_battery
 14
 18
-18.0
+14.4
 0.1
 1
 V
@@ -550,7 +524,7 @@ CHOOSER
 Cleaner_Modo
 Cleaner_Modo
 "Eco Mode" "Medium Mode" "Full Mode"
-2
+0
 
 MONITOR
 895
@@ -558,7 +532,7 @@ MONITOR
 1133
 321
 Potencia Cleaner (em watts)
-[Cleaner_Potencia_Battery] of cleaner 0
+[cleaner_potencia_battery] of cleaner 0
 2
 1
 11
@@ -741,6 +715,23 @@ Circle -7500403 true true 96 51 108
 Circle -16777216 true false 113 68 74
 Polygon -10899396 true false 189 233 219 188 249 173 279 188 234 218
 Polygon -10899396 true false 180 255 150 210 105 210 75 240 135 240
+
+garbage can
+false
+0
+Polygon -16777216 false false 60 240 66 257 90 285 134 299 164 299 209 284 234 259 240 240
+Rectangle -7500403 true true 60 75 240 240
+Polygon -7500403 true true 60 238 66 256 90 283 135 298 165 298 210 283 235 256 240 238
+Polygon -7500403 true true 60 75 66 57 90 30 135 15 165 15 210 30 235 57 240 75
+Polygon -7500403 true true 60 75 66 93 90 120 135 135 165 135 210 120 235 93 240 75
+Polygon -16777216 false false 59 75 66 57 89 30 134 15 164 15 209 30 234 56 239 75 235 91 209 120 164 135 134 135 89 120 64 90
+Line -16777216 false 210 120 210 285
+Line -16777216 false 90 120 90 285
+Line -16777216 false 125 131 125 296
+Line -16777216 false 65 93 65 258
+Line -16777216 false 175 131 175 296
+Line -16777216 false 235 93 235 258
+Polygon -16777216 false false 112 52 112 66 127 51 162 64 170 87 185 85 192 71 180 54 155 39 127 36
 
 house
 false
