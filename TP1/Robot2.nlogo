@@ -33,37 +33,14 @@ to Config_Battery
 
 end
 
-to Config_Polluters
-  let in 12.5
-  let it 0
-  let en 17.5
 
-  while [it < 13] [
-    ;; Adiciona o intervalo atual [in, en] à lista
-    let atual in
-    while [atual <= en] [
-       set tipo_lixo sentence tipo_lixo (list atual)
-      set atual atual + 0.5
-    ]
-
-
-    ;; Atualiza os valores de in e en
-    set in in + 10
-    set en en + 10
-
-    ;; Incrementa o contador i
-    set it it + 1
-  ]
-  set tipo_lixo but-first tipo_lixo
-  show tipo_lixo
-end
 
 ;setup, cujo programa permita: limpar o ambiente; criar e introduzir no mundo os agentes e fazer o reset do tempo.
 to setup
   clear-all
   reset-ticks
   set tick_bug_fix 10000 ; de 10000 em 10000 ticks reset da last_cleaning location senao ele pode ficar preso num loop de ir de ponta a ponta
-  Config_Polluters
+  set tipo_lixo [22.5 23 23.5 24 24.5 25 25.5 26 26.5 27 27.5 32.5 33 33.5 34 34.5 35 35.5 36 36.5 37 37.5 112.5 113 113.5 114 114.5 115 115.5 116 116.5 117 117.5]
   set cor_chao 8.5
   ask patches[
     set pcolor cor_chao
@@ -378,7 +355,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.0
+0.11
 0.01
 1
 NIL

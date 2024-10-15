@@ -131,7 +131,7 @@ to go_once
               ]
             ]
           ]
-            fd 0.5
+            fd 1
             set battery battery - battery_loss
             if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
             if capacity < cleaner_max_capacity[
@@ -156,7 +156,7 @@ to go_once
   ask polluters[
     ;;movimento
     if patch-ahead 1 = nobody[set heading random 360]
-    fd 0.7
+    fd 1
     ;;sujar ou não sujar, eis a questão
     ask polluters[
       if (random 100 < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
