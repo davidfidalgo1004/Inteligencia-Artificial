@@ -11,15 +11,15 @@ to Config_Battery
   ask cleaners[
     if Cleaner_Modo = "Eco Mode" [
       ;; comportamento para o modo Eco
-      set Cleaner_Potencia_Battery 10
+      set Cleaner_Potencia_Battery 5
     ]
     if Cleaner_Modo = "Medium Mode" [
       ;; comportamento para o modo Médio
-      set Cleaner_Potencia_Battery 30
+      set Cleaner_Potencia_Battery 10
     ]
     if Cleaner_Modo = "Full Mode" [
       ;; comportamento para o modo Full
-      set Cleaner_Potencia_Battery 50
+      set Cleaner_Potencia_Battery 30
     ]
     set cleaner_consumption_battery (Cleaner_Potencia_Battery / Cleaner_Tensão_Battery) / 60
     set cleaner_consumption_battery (cleaner_consumption_battery * 100 / (cleaner_capacity_battery / 1000))
@@ -325,7 +325,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 300
 2000
-1970.0
+2000.0
 10
 1
 gr
@@ -355,7 +355,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.11
+0.0
 0.01
 1
 NIL
