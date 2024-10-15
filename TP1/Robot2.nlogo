@@ -3,7 +3,7 @@ globals[cor_chao posto_carregamento depositos tick_bug_fix tipo_lixo num_pollute
 breed[cleaners cleaner]
 breed[polluters polluter]
 breed[containers container]
-cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_consumption_battery cleaner_potencia_battery]
+cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_consumption_battery cleaner_potencia_battery cleaner_stop]
 polluters-own[prob_sujar]
 
 to Config_Battery
@@ -58,6 +58,7 @@ to setup
     set battery 100
     set capacity 0
     set last_cleaning_location [0 0]
+    set cleaner_stop 0
   ]
   Config_Battery
 
@@ -176,8 +177,13 @@ to go_once
               ]
             ]
           ]
+            if cleaner_stop = 0[
             fd 1
             set battery battery - cleaner_consumption_battery
+            ]
+            if cleaner_stop = 1 [
+            set battery battery - (cleaner_consumption_battery / 10)
+            ]
             if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
             if capacity < cleaner_max_capacity[
             ask patch-here [
@@ -186,16 +192,32 @@ to go_once
                 let cod_cor (cor_lixo mod 10)
                 ask cleaners [
                   if cod_cor >= 2.5 and cod_cor <= 3.5 and cleaner_max_capacity >= capacity + 3[
+                    if cleaner_potencia_battery = 10 or cleaner_potencia_battery = 33[
+                      set pcolor pcolor + 1.5
+                      set capacity capacity + 1
+                      set cleaner_stop 1
+                    ]
+                    if cleaner_potencia_battery = 50 [
                     set capacity capacity + 3
                     set pcolor cor_chao
+                      set cleaner_stop 0
+                    ]
                   ]
                   if cod_cor >= 4 and cod_cor <= 6 and cleaner_max_capacity >= capacity + 2[
+                    if cleaner_potencia_battery = 10[
+                      set pcolor pcolor + 2.5
+                      set cleaner_stop 1
+                    ]
+                    if cleaner_potencia_battery = 50 and cleaner_potencia_battery = 33 [
                     set capacity capacity + 2
                     set pcolor cor_chao
+                    set cleaner_stop 0
+                    ]
                   ]
-                  if cod_cor >= 6.5 and cod_cor <= 7.5 and cleaner_max_capacity >= capacity + 1[
+                  if cod_cor >= 6.5 and cleaner_max_capacity >= capacity + 1[
                     set capacity capacity + 1
                     set pcolor cor_chao
+                    set cleaner_stop 0
                   ]
                 ]
               ]
@@ -379,7 +401,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-0.06
+0.11
 0.01
 1
 NIL
