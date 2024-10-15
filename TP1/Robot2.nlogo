@@ -320,6 +320,7 @@ cleaner_max_capacity
 300
 500
 300.0
+
 10
 1
 ml
@@ -349,7 +350,9 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
+
 0.06
+0.0
 0.01
 1
 NIL
