@@ -2,8 +2,49 @@
 globals[cor_chao posto_carregamento depositos tick_bug_fix]
 breed[cleaners cleaner]
 breed[polluters polluter]
-cleaners-own[battery capacity recharge_time last_cleaning_location]
+cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_map]
 polluters-own[prob_sujar]
+
+to Modo_Map
+  ;; Verifica se a tartaruga não está nas coordenadas (-16, -16) ou se ainda não atingiu a borda direita
+  if (pxcor = -16 and pycor = -16) [
+    fd 1  ;; Move a tartaruga para frente
+  ]
+  if not (pxcor = -16 and pycor = -16) and xcor < max-pxcor and xcor > min-pxcor[
+    fd 1
+  ]
+  ;; Muda a direção para cima se atingir a borda direita
+  if xcor = max-pxcor and heading != 0[
+    set heading 0  ;; Muda a direção para cima
+    fd 1  ;; Move para cima
+  ]
+
+  if xcor = max-pxcor and heading = 0[
+    set heading 270  ;; Muda a direção para cima
+    fd 1  ;; Move para cima
+  ]
+
+  ;; Muda a direção para a esquerda se atingir a borda esquerda
+  if xcor = min-pxcor and heading != 0  [
+    set heading 0  ;; Muda a direção para a esquerda
+    fd 1  ;; Move para a esquerda
+  ]
+
+  if xcor = min-pxcor and heading = 0  [
+    set heading 90  ;; Muda a direção para a esquerda
+    fd 1  ;; Move para a esquerda
+  ]
+  if ticks = 1024 [
+    set cleaner_map FALSE
+  ]
+  if [pcolor] of patch-here = blue [
+    let coordenadas_depositos (list xcor ycor)
+    set depositos lput coordenadas_depositos depositos
+  ]
+
+
+end
+
 
 ;setup, cujo programa permita: limpar o ambiente; criar e introduzir no mundo os agentes e fazer o reset do tempo.
 to setup
@@ -22,13 +63,11 @@ to setup
 
   ;;criacao de depositos
   let i 1
-  set depositos []
   ask patches [
     set i count patches with [pcolor = blue]
     if pcolor = cor_chao and i < num_depositos and one-of [pcolor] of neighbors4 != blue[;; nao há depositos juntos (fica confuso)
       show [pcolor] of neighbors4
       set pcolor blue
-      set depositos fput (list pxcor pycor) depositos
     ]
   ]
 
@@ -38,6 +77,7 @@ to setup
   create-polluters 3;
 
   ask cleaners[
+    set depositos []
     set shape "vaccum"
     set size 3.5
     ;;origem do cleaner (posto de carregamento)
@@ -45,6 +85,8 @@ to setup
     set battery cleaner_max_battery
     set capacity 0
     set last_cleaning_location [0 0]
+    set cleaner_map TRUE
+    set heading 0
   ]
 
   ask polluters[
@@ -131,6 +173,8 @@ to go_once
               ]
             ]
           ]
+          if cleaner_map = FALSE [
+            show depositos
             fd 1
             set battery battery - battery_loss
             if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
@@ -145,8 +189,11 @@ to go_once
                 ]
               ]
             ];;fim encontrar residuo
-
           ]
+          if cleaner_map = TRUE [
+            Modo_Map
+          ]
+        ]
         ;ask patch-here [set pcolor red]; pinta area vizinha vermelho (debug)
         ;ask neighbors [ set pcolor red ];; pinta area vizinha vermelho (debug)
       ]
@@ -274,7 +321,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 0
 1000
-136.0
+25.0
 1
 1
 NIL
@@ -304,7 +351,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.0
+0.22
 0.01
 1
 NIL
