@@ -177,17 +177,17 @@ to go_once
               ]
             ]
           ]
-            if cleaner_stop = 0[
+          if cleaner_stop = 0[
             fd 1
             set battery battery - cleaner_consumption_battery
-            ]
-            if cleaner_stop = 1 [
+          ]
+          if cleaner_stop = 1 [
             set battery battery - (cleaner_consumption_battery / 10)
-            ]
-            if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
-            if capacity < cleaner_max_capacity[
+          ]
+          if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
+          if capacity < cleaner_max_capacity[
             ask patch-here [
-              if pcolor != cor_chao and pcolor != black and pcolor != blue [
+              if pcolor != cor_chao and pcolor != black and pcolor != blue or [cleaner_stop] of cleaner 0 = 1[
                 let cor_lixo pcolor
                 let cod_cor (cor_lixo mod 10)
                 ask cleaners [
@@ -198,8 +198,8 @@ to go_once
                       set cleaner_stop 1
                     ]
                     if cleaner_potencia_battery = 50 [
-                    set capacity capacity + 3
-                    set pcolor cor_chao
+                      set capacity capacity + 3
+                      set pcolor cor_chao
                       set cleaner_stop 0
                     ]
                   ]
@@ -209,9 +209,9 @@ to go_once
                       set cleaner_stop 1
                     ]
                     if cleaner_potencia_battery = 50 and cleaner_potencia_battery = 33 [
-                    set capacity capacity + 2
-                    set pcolor cor_chao
-                    set cleaner_stop 0
+                      set capacity capacity + 2
+                      set pcolor cor_chao
+                      set cleaner_stop 0
                     ]
                   ]
                   if cod_cor >= 6.5 and cleaner_max_capacity >= capacity + 1[
@@ -356,7 +356,7 @@ cleaner_tempo_carregamento
 cleaner_tempo_carregamento
 1
 100
-50.0
+63.0
 1
 1
 ticks
