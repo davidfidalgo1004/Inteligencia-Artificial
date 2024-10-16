@@ -57,7 +57,7 @@ to setup
 
   ask cleaners[
     set shape "vaccum"
-    set size 2.5
+    set size 3
     let canto_inferior_esquerdo (list min-pxcor min-pycor) ; origem do cleaner (posto de carregamento)
     setxy (item 0 canto_inferior_esquerdo ) (item 1 canto_inferior_esquerdo) ;; criado no canto inferior esquerdo
     set battery 100
@@ -69,7 +69,7 @@ to setup
 
   ask polluters[
     set shape "cow"
-    set size 1.5
+    set size
     set color white
     set label-color black
     set label who

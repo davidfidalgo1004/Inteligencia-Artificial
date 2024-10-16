@@ -6,34 +6,26 @@ cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_map]
 polluters-own[prob_sujar]
 
 to Modo_Map
-
-  ;; Verifica se a tartaruga não está nas coordenadas (-16, -16) ou se ainda não atingiu a borda direita
-  ;; Muda a direção para cima se atingir a borda direita
-  if xcor = max-pxcor and hea[
-    set heading 0  ;; Muda a direção para cima
-    fd 1  ;; Move para cima
+  ;0 norte, 90 este, 180 sul, 270 oeste
+  if xcor = min-pxcor[ ;chega borda esquerda
+    ifelse patch-ahead 1.5 = nobody[ ; se é parede
+      set heading 0
+    ][
+      set heading 90
+    ]
   ]
-
-  if xcor = max-pxcor and heading = 0[
-    set heading 270  ;; Muda a direção para cima
-    fd 1  ;; Move para cima
+  if xcor = max-pxcor[ ;chega borda direita
+    ifelse patch-ahead 1.5 = nobody[ ; se é parede
+      set heading 0
+    ][
+      set heading -90
+    ]
   ]
-
-  ;; Muda a direção para a esquerda se atingir a borda esquerda
-  if xcor = min-pxcor and heading != 0  [
-    set heading 0  ;; Muda a direção para a esquerda
-    fd 1  ;; Move para a esquerda
-  ]
-
-  if xcor = min-pxcor and heading = 0  [
-    set heading 90  ;; Muda a direção para a esquerda
-    fd 1  ;; Move para a esquerda
-  ]
-  if ticks = 1024 [
+  if round xcor = max-pxcor and round ycor = max-pycor [
     set cleaner_map FALSE
   ]
   if [pcolor] of patch-here = blue [
-    let coordenadas_depositos (list xcor ycor)
+    let coordenadas_depositos (list round xcor round ycor)
     set depositos lput coordenadas_depositos depositos
   ]
 
@@ -61,7 +53,6 @@ to setup
   ask patches [
     set i count patches with [pcolor = blue]
     if pcolor = cor_chao and i < num_depositos and one-of [pcolor] of neighbors4 != blue[;; nao há depositos juntos (fica confuso)
-      show [pcolor] of neighbors4
       set pcolor blue
     ]
   ]
@@ -73,15 +64,15 @@ to setup
 
   ask cleaners[
     set depositos []
-    set shape "vaccum"
+    set shape "arrow"
     set size 1.5
     ;;origem do cleaner (posto de carregamento)
-    setxy -16 -16
+    setxy item 0 posto_carregamento item 1 posto_carregamento
     set battery cleaner_max_battery
     set capacity 0
     set last_cleaning_location [0 0]
     set cleaner_map TRUE
-    set heading 0
+    set heading 90
   ]
 
   ask polluters[
@@ -121,7 +112,14 @@ to go_once
     ;ask neighbors [set pcolor 39];; pinta area vizinha da cor do chao (debug)
     ;ask patch-here [set pcolor 39]; pinta area vizinha vermelho (debug)
     let cleaner_atual who ;; para permitir mais cleaners e usar o codigo abaixo
-
+    ask patch-here[
+      if pcolor != blue [
+        let coordenadas_depositos (list round pxcor round pycor)
+        if member? coordenadas_depositos depositos[
+          set depositos remove coordenadas_depositos depositos
+        ]
+      ]
+    ]
     ;;modo carregar
     if battery > cleaner_max_battery [ set battery cleaner_max_battery]
     ask patch-here[
@@ -137,14 +135,6 @@ to go_once
       ][
         ;;1º verificar a bateria (modelo Robot1 dirige-se ao posto quando chega a uma certa percentagem)
         ask cleaners[
-          ask patch-here[
-            if pcolor != blue [
-              let coordenadas_depositos (list pxcor pycor)
-              if member? coordenadas_depositos depositos[
-                set depositos remove coordenadas_depositos depositos
-              ]
-            ]
-          ]
           ifelse battery <= 50 * battery_loss[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
             if last_cleaning_location = [0 0][;; aspirador guarda sitio onde estava a aspirar até ter de ir carregar bateria
               set last_cleaning_location (list round xcor round ycor)
@@ -155,16 +145,29 @@ to go_once
             ifelse capacity >= cleaner_max_capacity[
               ;; modo ir depositar
               ifelse [pcolor] of patch-here = blue[
-                let coordenadas_depositos (list xcor ycor)
-                if member? coordenadas_depositos depositos[
+                let coordenadas_depositos (list round xcor round ycor)
+                if not member? coordenadas_depositos depositos[
                   set depositos lput coordenadas_depositos depositos
                 ]
                 set capacity 0 ;; esvazia capacidade toda (ia melhorar mas melhor guardar para fase 2
               ][
-                let target-patch min-one-of (patches in-radius 40 with [pcolor = blue]) [distance myself] ;;(apenas esta linha é)solucao stackoverflow :"https://stackoverflow.com/questions/36019543/turtles-move-to-nearest-patch-of-a-certain-color-how-can-this-process-be-sped"
-                if target-patch != nobody[
-                  ask cleaner cleaner_atual[
-                    face target-patch ;;; direcionar para o
+                let menor-distancia (max-pxcor * 3)
+                let target-patch one-of depositos
+                let j 0
+                foreach depositos [
+                  let coordenada item j depositos
+                  let x item 0 coordenada
+                  let y item 1 coordenada
+                  let distancia-atual distancexy x y
+                  if distancia-atual < menor-distancia [
+                    set menor-distancia distancia-atual
+                    set target-patch patch x y
+                  ]
+                  set j j + 1
+                ]
+                if target-patch != nobody [
+                  ask cleaner cleaner_atual [
+                    face target-patch  ; Faz o cleaner olhar para o patch-alvo
                   ]
                 ]
               ]
@@ -174,14 +177,13 @@ to go_once
                 facexy item 0 last_cleaning_location item 1 last_cleaning_location ;;;TO UPGRADE: virar caso bata enquanto vai para sitio dele
               ][ ;aspirar área desconhecida:
                  ;; logica de virar quando bate em algo para cobrir terreno desconhecido (retirado de: https://youtu.be/O7ozptNs1FY?si=MSywmYDwbmLPsnCb )
-                if patch-ahead 1 = nobody[set heading random 360]
+                if patch-ahead 1 = nobody and cleaner_map = FALSE [set heading random 360]
               ]
             ]
           ]
           if cleaner_map = FALSE [
-            show depositos
-            fd 1
-            set battery battery - battery_loss
+          fd 1
+          set battery battery - battery_loss
             if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
             if capacity < cleaner_max_capacity[
               ask patch-here[
@@ -197,6 +199,8 @@ to go_once
           ]
           if cleaner_map = TRUE [
             Modo_Map
+            fd 1
+            set battery battery - battery_loss
           ]
         ]
         ;ask patch-here [set pcolor red]; pinta area vizinha vermelho (debug)
@@ -356,7 +360,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.22
+1.0
 0.01
 1
 NIL
@@ -371,7 +375,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -386,7 +390,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -452,7 +456,7 @@ INPUTBOX
 647
 77
 n
-100.0
+31.0
 1
 0
 Number
@@ -507,7 +511,7 @@ num_depositos
 num_depositos
 2
 10
-10.0
+7.0
 1
 1
 NIL
