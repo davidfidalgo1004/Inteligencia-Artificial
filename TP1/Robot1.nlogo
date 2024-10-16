@@ -3,10 +3,9 @@ globals[cor_chao posto_carregamento depositos tick_bug_fix]
 breed[cleaners cleaner]
 breed[polluters polluter]
 cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_map]
-polluters-own[prob_sujar]
+polluters-own[prob_sujar polluter_corlixo]
 
 to Modo_Map
-  ;0 norte, 90 este, 180 sul, 270 oeste
   if xcor = min-pxcor[ ;chega borda esquerda
     ifelse patch-ahead 1.5 = nobody[ ; se é parede
       set heading 0
@@ -28,8 +27,6 @@ to Modo_Map
     let coordenadas_depositos (list round xcor round ycor)
     set depositos lput coordenadas_depositos depositos
   ]
-
-
 end
 
 
@@ -64,7 +61,7 @@ to setup
 
   ask cleaners[
     set depositos []
-    set shape "arrow"
+    set shape "circle"
     set size 1.5
     ;;origem do cleaner (posto de carregamento)
     setxy item 0 posto_carregamento item 1 posto_carregamento
@@ -88,11 +85,20 @@ end
 ;go_once, cujo programa permita: que os agentes circulem no mundo de forma aleatória (um só tick);
 to go_once
   ;;atualizar probabilidades dos sliders
-  ask polluter 1 [set prob_sujar polluter_1_prob_sujar]
-  ask polluter 2 [set prob_sujar polluter_2_prob_sujar]
-  ask polluter 3 [set prob_sujar polluter_3_prob_sujar]
+  ask polluter 1 [
+    set prob_sujar polluter_1_prob_sujar
+    set polluter_corlixo 35
+  ]
+  ask polluter 2 [
+    set prob_sujar polluter_2_prob_sujar
+    set polluter_corlixo 25
+  ]
+  ask polluter 3 [
+    set prob_sujar polluter_3_prob_sujar
+    set polluter_corlixo 115
+  ]
 
-  ;;ask polluters [show prob_sujar];; (debug)
+  ;;ask polluters [show prob_sujar];; (debug) 32.5 42.5 52.5
 
   ;;atualizar depositos
   let i 1
@@ -209,21 +215,52 @@ to go_once
     ]
   ]
   ;;ações dos polluters
-  ask polluters[
+  ask polluter 1[
     ;;movimento
     if patch-ahead 1 = nobody[set heading random 360]
     fd 1
     ;;sujar ou não sujar, eis a questão
-    ask polluters[
-      if (random 100 < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
-        let tipo_lixo [32.5 42.5 52.5];tipos de lixo
-        ask patch-here[
-          if pcolor = cor_chao[ ; se estiver em chao
-            set pcolor ( item (random 3) tipo_lixo) ;random para as cores/tipos de lixo (random 3; 0 1 2)
-          ]
+
+    if (random 100 < prob_sujar * 100) [
+      ask patch-here[
+        if pcolor = cor_chao[ ; se estiver em chao
+          set pcolor [polluter_corlixo] of polluter 1
         ]
       ]
     ]
+
+  ]
+
+  ask polluter 2[
+    ;;movimento
+    if patch-ahead 1 = nobody[set heading random 360]
+    fd 1
+    ;;sujar ou não sujar, eis a questão
+
+    if (random 100 < prob_sujar * 100) [
+      ask patch-here[
+        if pcolor = cor_chao[ ; se estiver em chao
+          set pcolor [polluter_corlixo] of polluter 2
+        ]
+      ]
+    ]
+
+  ]
+
+  ask polluter 3[
+    ;;movimento
+    if patch-ahead 1 = nobody[set heading random 360]
+    fd 1
+    ;;sujar ou não sujar, eis a questão
+
+    if (random 100 < prob_sujar * 100) [
+      ask patch-here[
+        if pcolor = cor_chao[ ; se estiver em chao
+          set pcolor [polluter_corlixo] of polluter 3
+        ]
+      ]
+    ]
+
   ]
   tick
 end
@@ -311,10 +348,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-11
-462
-156
-507
+492
+439
+637
+484
 Cleaner - Bateria Restante 
 [battery] of cleaner 0
 2
@@ -330,7 +367,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 0
 1000
-25.0
+1000.0
 1
 1
 NIL
@@ -360,7 +397,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-1.0
+0.28
 0.01
 1
 NIL
@@ -375,7 +412,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-1.0
+0.02
 0.01
 1
 NIL
@@ -390,7 +427,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-1.0
+0.21
 0.01
 1
 NIL
@@ -407,10 +444,10 @@ tempo carregamento:\ndo min ao max de bateria\n
 1
 
 TEXTBOX
-694
-135
-972
-191
+693
+118
+815
+174
 Mudar \"cleaner_max_battery\" enquanto o aspirador trabalha pode prender o aspirador numa rota específica 
 11
 0.0
@@ -462,21 +499,21 @@ n
 Number
 
 INPUTBOX
-167
-452
-243
-512
+648
+429
+724
+489
 battery_loss
-0.01
+1.0
 1
 0
 Number
 
 MONITOR
-261
-460
-399
-505
+742
+437
+880
+482
 Cleaner - Capacidade
 [capacity] of cleaner 0
 17
@@ -484,10 +521,10 @@ Cleaner - Capacidade
 11
 
 PLOT
-742
-285
-1089
-561
+842
+95
+1189
+371
 Contaminação Vs Limpeza
 Limpo
 Sujo
@@ -503,10 +540,10 @@ PENS
 "Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = 39]"
 
 SLIDER
-429
-466
-536
-499
+910
+443
+1017
+476
 num_depositos
 num_depositos
 2
