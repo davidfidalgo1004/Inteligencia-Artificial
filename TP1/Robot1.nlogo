@@ -6,15 +6,10 @@ cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_map]
 polluters-own[prob_sujar]
 
 to Modo_Map
+
   ;; Verifica se a tartaruga não está nas coordenadas (-16, -16) ou se ainda não atingiu a borda direita
-  if (pxcor = -16 and pycor = -16) [
-    fd 1  ;; Move a tartaruga para frente
-  ]
-  if not (pxcor = -16 and pycor = -16) and xcor < max-pxcor and xcor > min-pxcor[
-    fd 1
-  ]
   ;; Muda a direção para cima se atingir a borda direita
-  if xcor = max-pxcor and heading != 0[
+  if xcor = max-pxcor and hea[
     set heading 0  ;; Muda a direção para cima
     fd 1  ;; Move para cima
   ]
@@ -79,7 +74,7 @@ to setup
   ask cleaners[
     set depositos []
     set shape "vaccum"
-    set size 3.5
+    set size 1.5
     ;;origem do cleaner (posto de carregamento)
     setxy -16 -16
     set battery cleaner_max_battery
@@ -114,11 +109,9 @@ to go_once
     set i count patches with [pcolor = blue]
     if pcolor = cor_chao and i < num_depositos[
       set pcolor blue
-      set depositos fput (list pxcor pycor) depositos
     ]
     if i > num_depositos and pcolor = blue[
       set pcolor cor_chao
-      set depositos remove (list pxcor pycor) depositos
     ]
   ]
 
@@ -144,6 +137,14 @@ to go_once
       ][
         ;;1º verificar a bateria (modelo Robot1 dirige-se ao posto quando chega a uma certa percentagem)
         ask cleaners[
+          ask patch-here[
+            if pcolor != blue [
+              let coordenadas_depositos (list pxcor pycor)
+              if member? coordenadas_depositos depositos[
+                set depositos remove coordenadas_depositos depositos
+              ]
+            ]
+          ]
           ifelse battery <= 50 * battery_loss[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
             if last_cleaning_location = [0 0][;; aspirador guarda sitio onde estava a aspirar até ter de ir carregar bateria
               set last_cleaning_location (list round xcor round ycor)
@@ -154,6 +155,10 @@ to go_once
             ifelse capacity >= cleaner_max_capacity[
               ;; modo ir depositar
               ifelse [pcolor] of patch-here = blue[
+                let coordenadas_depositos (list xcor ycor)
+                if member? coordenadas_depositos depositos[
+                  set depositos lput coordenadas_depositos depositos
+                ]
                 set capacity 0 ;; esvazia capacidade toda (ia melhorar mas melhor guardar para fase 2
               ][
                 let target-patch min-one-of (patches in-radius 40 with [pcolor = blue]) [distance myself] ;;(apenas esta linha é)solucao stackoverflow :"https://stackoverflow.com/questions/36019543/turtles-move-to-nearest-patch-of-a-certain-color-how-can-this-process-be-sped"
@@ -336,7 +341,7 @@ cleaner_tempo_carregamento
 cleaner_tempo_carregamento
 1
 100
-9.0
+10.0
 1
 1
 ticks
