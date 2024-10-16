@@ -1,5 +1,5 @@
 ;; globals
-globals[cor_chao cor_objetos posto_carregamento depositos tick_bug_fix tipo_lixo num_polluters cleaner_max_battery eco med turbo]
+globals[cor_chao cor_objetos posto_carregamento depositos lista_objetos tick_bug_fix tipo_lixo num_polluters cleaner_max_battery eco med turbo]
 breed[cleaners cleaner]
 breed[polluters polluter]
 breed[containers container]
@@ -100,15 +100,19 @@ to setup
 
   ;;criacao obstaculos
   set i 0
+  set lista_objetos []
   ask patches[
     set i count patches with [pcolor = cor_objetos]
     if pcolor = cor_chao and i < num_obstaculos * 4[
       let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
       if [pcolor] of patches at-points object1 = (n-values (length object1) [cor_chao]) [ ;;;IMPORTANTE, BOA LOGICA PENSADA AQUI (ou pareceu boa ao pensar nela :p)
         ask patches at-points object1 [set pcolor cor_objetos]
+        set lista_objetos fput object1 lista_objetos
+        show lista_objetos
       ]
     ]
   ]
+  show one-of lista_objetos
 end
 
 ;go_once, cujo programa permita: que os agentes circulem no mundo de forma aleatória (um só tick);
@@ -128,7 +132,7 @@ to go_once
     set i count patches with [pcolor = blue]
     if pcolor = cor_chao and i < num_depositos[
       set pcolor blue
-      set depositos fput (list pxcor pycor) depositos
+      set depositos lput (list pxcor pycor) depositos
       sprout-containers 1 [
         set shape "garbage can"
         set size 2
@@ -141,7 +145,25 @@ to go_once
       set depositos remove (list pxcor pycor) depositos
     ]
   ]
-
+  ;;atualizar obstaculos
+  ask patches[
+    set i count patches with [pcolor = cor_objetos]
+    if i < num_obstaculos * 4[
+      let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
+      if [pcolor] of patches at-points object1 = (n-values (length object1) [cor_chao]) [ ;;;IMPORTANTE, BOA LOGICA PENSADA AQUI (ou pareceu boa ao pensar nela :p)
+        ask patches at-points object1 [set pcolor cor_objetos]
+        set lista_objetos lput object1 lista_objetos
+        show lista_objetos
+      ]
+    ]
+  ]
+    if i > num_obstaculos * 4[
+      show lista_objetos
+;      let eliminar_objetos one-of lista_objetos
+;      show eliminar_objetos
+;      ask patches at-points eliminar_objetos [set pcolor cor_chao]
+;      set lista_objetos remove eliminar_objetos lista_objetos
+    ]
 
   ;;ações do cleaner
   ask cleaners[
@@ -250,11 +272,20 @@ to go_once
   ;;ações dos polluters
   ask polluters[
     ;;movimento
-    if patch-ahead 1 = nobody or ([pcolor] of patch-ahead 1 = cor_objetos) [set heading random 360]
-    fd 1
+    ifelse patch-ahead 1 = nobody [set heading random 360][
+      if (any? neighbors with [pcolor = cor_objetos]) [
+        right random 90 - random 90
+      ]
+    ]
     ;;sujar ou não sujar, eis a questão
+    fd 1
+    move-to patch-here
+    if ([pcolor] of patch-here = cor_objetos) [
+      let target-patch min-one-of (patches in-radius 5 with [pcolor = cor_chao]) [distance myself]
+      move-to target-patch
+    ]
+
     let rand_num random 100
-    let whowho who
     if (rand_num < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
       let conjunto_cor [0]
       if color = 5  [set conjunto_cor item 0 tipo_lixo]
@@ -509,7 +540,7 @@ num_depositos
 num_depositos
 2
 10
-10.0
+4.0
 1
 1
 NIL
@@ -586,7 +617,7 @@ num_obstaculos
 num_obstaculos
 0
 10
-7.0
+2.0
 1
 1
 NIL
