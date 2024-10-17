@@ -1,0 +1,313 @@
+;; globals
+globals[cor_chao cor_objetos posto_carregamento depositos lista_objetos tick_bug_fix tipo_lixo num_polluters cleaner_max_battery eco med turbo]
+breed[cleaners cleaner]
+breed[polluters polluter]
+breed[containers container]
+breed[obstacles obstacle]
+cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_consumption_battery cleaner_potencia_battery cleaner_stop]
+polluters-own[prob_sujar]
+
+to Config_Battery
+  set eco "Eco Mode"
+  set med "Medium Mode"
+  set turbo "Full Mode"
+
+  ask cleaners[
+    if Cleaner_Modo = eco [
+      ;; comportamento para o modo Eco
+      set cleaner_potencia_battery 10
+    ]
+    if Cleaner_Modo = med [
+      ;; comportamento para o modo Médio
+      set cleaner_potencia_battery 30
+    ]
+    if Cleaner_Modo = turbo [
+      ;; comportamento para o modo Full
+      set cleaner_potencia_battery 50
+    ]
+    let cleaner_corrente_battery (cleaner_potencia_battery / cleaner_tensao_battery) * 1000;; isto é a corrente em mA
+    let cleaner_ma_segundo_battery cleaner_corrente_battery / 3600 ;; aqui o gasto de mA por segundo
+    set cleaner_consumption_battery (cleaner_ma_segundo_battery / cleaner_capacity_battery) * 100
+  ]
+
+end
+
+
+
+;setup, cujo programa permita: limpar o ambiente; criar e introduzir no mundo os agentes e fazer o reset do tempo.
+to setup
+  clear-all
+  reset-ticks
+  set tick_bug_fix 10000 ; de 10000 em 10000 ticks reset da last_cleaning location senao ele pode ficar preso num loop de ir de ponta a ponta
+  set tipo_lixo (list (range 2.5 7.5 0.5)(range 32.5 37.5 0.5)(range 52.5 57.5 0.5))
+  set cor_chao 8.5
+  set cor_objetos magenta
+  set cleaner_max_battery 100
+  ask patches[
+    set pcolor cor_chao
+  ]
+  set posto_carregamento [-16 -16]
+  ask patch item 0 posto_carregamento item 1 posto_carregamento[;; caso mude tamanho do world
+    set pcolor black
+  ]
+
+  ;;padrões do dicionário do netlogo
+  create-cleaners 1
+  create-polluters 3
+
+  ask cleaners[
+    set shape "vaccum"
+    set size 2.5
+    let canto_inferior_esquerdo (list min-pxcor min-pycor) ; origem do cleaner (posto de carregamento)
+    setxy (item 0 canto_inferior_esquerdo ) (item 1 canto_inferior_esquerdo) ;; criado no canto inferior esquerdo
+    set battery 100
+    set capacity 0
+    set last_cleaning_location [0 0]
+    set cleaner_stop 0
+  ]
+  Config_Battery
+
+  ask polluters[
+    set shape "cow"
+    set size 1.5
+    set color white
+    set label-color black
+    set label who
+    setxy random-pxcor random-pycor
+  ]
+  ask polluter 1 [ set color 5 ]
+  ask polluter 2 [ set color 35 ]
+  ask polluter 3 [ set color 55 ]
+
+  ;;criacao de depositos
+  let i 1
+  set depositos []
+  ask patches [
+    set i count patches with [pcolor = blue]
+    if pcolor = cor_chao and i < num_depositos[;; evitar depositos juntos (fica confuso)
+      if all? neighbors4 [pcolor = cor_chao] [
+        set pcolor blue
+        sprout-containers 1
+        set depositos fput (list pxcor pycor) depositos
+      ]
+    ]
+  ]
+  ask containers[
+    set shape "garbage can"
+    set size 2
+    set color grey
+  ]
+
+  ;;criacao obstaculos
+  set i 0
+  set lista_objetos []
+  ask patches[
+    set i count patches with [pcolor = cor_objetos]
+    if pcolor = cor_chao and i < num_obstaculos * 4[
+      let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
+      if [pcolor] of patches at-points object1 = (n-values (length object1) [cor_chao]) [ ;;;IMPORTANTE, BOA LOGICA PENSADA AQUI (ou pareceu boa ao pensar nela :p)
+        ask patches at-points object1 [set pcolor cor_objetos]
+        set lista_objetos fput object1 lista_objetos
+        show lista_objetos
+      ]
+    ]
+  ]
+  show one-of lista_objetos
+end
+
+;go_once, cujo programa permita: que os agentes circulem no mundo de forma aleatória (um só tick);
+to go_once
+  ;;atualizar probabilidades dos sliders
+  ask polluters[
+    if color = 5  [set prob_sujar polluter_1_prob_sujar]
+    if color = 35 [set prob_sujar polluter_2_prob_sujar]
+    if color = 55 [set prob_sujar polluter_3_prob_sujar]
+  ]
+  Config_Battery
+  ;;ask polluters [show prob_sujar];; (debug)
+
+  ;;atualizar depositos
+  let i 1
+  ask patches [
+    set i count patches with [pcolor = blue]
+    if pcolor = cor_chao and i < num_depositos[
+      set pcolor blue
+      set depositos lput (list pxcor pycor) depositos
+      sprout-containers 1 [
+        set shape "garbage can"
+        set size 2
+        set color grey
+      ]
+    ]
+    if i > num_depositos and pcolor = blue[
+      set pcolor cor_chao
+      ask containers-here[die]
+      set depositos remove (list pxcor pycor) depositos
+    ]
+  ]
+  ;;atualizar obstaculos
+  ask patches[
+    set i count patches with [pcolor = cor_objetos]
+    if i < num_obstaculos * 4[
+      let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
+      if [pcolor] of patches at-points object1 = (n-values (length object1) [cor_chao]) [ ;;;IMPORTANTE, BOA LOGICA PENSADA AQUI (ou pareceu boa ao pensar nela :p)
+        ask patches at-points object1 [set pcolor cor_objetos]
+        set lista_objetos lput object1 lista_objetos
+        show lista_objetos
+      ]
+    ]
+  ]
+    if i > num_obstaculos * 4[
+      show lista_objetos
+;      let eliminar_objetos one-of lista_objetos
+;      show eliminar_objetos
+;      ask patches at-points eliminar_objetos [set pcolor cor_chao]
+;      set lista_objetos remove eliminar_objetos lista_objetos
+    ]
+
+  ;;ações do cleaner
+  ask cleaners[
+    ;ask neighbors [set pcolor 39];; pinta area vizinha da cor do chao (debug)
+    ;ask patch-here [set pcolor 39]; pinta area vizinha vermelho (debug)
+    let cleaner_atual who ;; para permitir mais cleaners e usar o codigo abaixo
+
+    ;;modo carregar
+    if battery > cleaner_max_battery [ set battery cleaner_max_battery]
+    ask patch-here[
+      ifelse pcolor = black and ([battery] of cleaner cleaner_atual < cleaner_max_battery) [; "já chegamos" método, verifica se já está no ponto de carregamento
+        ask cleaners[
+          let battery_a_cargar battery + (cleaner_max_battery / cleaner_tempo_carregamento);; battery_a_cargar é o cálculo de quanto a bateria vai carregar em um tick
+          ifelse battery_a_cargar > cleaner_max_battery [ ; este if previne a bateria de atingir valores maiores à capacidade da bateria
+            set battery cleaner_max_battery
+          ][ ; se ainda faltar carregar
+            set battery battery + (cleaner_max_battery / cleaner_tempo_carregamento) ;por cada tick para 100 max é tipo: 100/10 = 10% a cada tick
+          ]
+        ]
+      ][
+        ;;1º verificar a bateria (modelo Robot1 dirige-se ao posto quando chega a uma certa percentagem)
+        ask cleaners[
+          ifelse battery <= 46 * cleaner_consumption_battery[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
+            if last_cleaning_location = [0 0][;; aspirador guarda sitio onde estava a aspirar até ter de ir carregar bateria
+              set last_cleaning_location (list round xcor round ycor)
+              if ticks > tick_bug_fix [set last_cleaning_location [-15 -15] set tick_bug_fix tick_bug_fix + 10000]; senao ele fica la em cima e nao volta.... porque nao tem movimentos random suficiente para voltar para baixo
+            ]
+            facexy item 0 posto_carregamento item 1 posto_carregamento ;; código direcçao à bateria
+          ][
+            ifelse capacity >= cleaner_max_capacity[
+              ;; modo ir depositar
+              ifelse [pcolor] of patch-here = blue[
+                set capacity 0 ;; esvazia capacidade toda (ia melhorar mas melhor guardar para fase 2
+              ][
+                let target-patch min-one-of (patches in-radius 40 with [pcolor = blue]) [distance myself] ;;(apenas esta linha é)solucao stackoverflow :"https://stackoverflow.com/questions/36019543/turtles-move-to-nearest-patch-of-a-certain-color-how-can-this-process-be-sped"
+                if target-patch != nobody[
+                  ask cleaner cleaner_atual[
+                    face target-patch ;;; direcionar para o deposito
+                  ]
+                ]
+              ]
+            ][
+              ;;movimento modo aspirar
+              ifelse last_cleaning_location != [0 0][ ;; voltar ao local anterior
+                facexy item 0 last_cleaning_location item 1 last_cleaning_location ;;;TO UPGRADE: virar caso bata enquanto vai para sitio dele
+              ][ ;aspirar área desconhecida:
+                 ;; logica de virar quando bate em algo para cobrir terreno desconhecido (retirado de: https://youtu.be/O7ozptNs1FY?si=MSywmYDwbmLPsnCb )
+                if patch-ahead 1 = nobody or ([pcolor] of patch-ahead 1 = cor_objetos) [set heading random 360]
+              ]
+            ]
+          ]
+          if cleaner_stop = 0[
+            if patch-ahead 1 != nobody[
+              if not (any? neighbors with [pcolor = cor_objetos]) [fd 1]
+            ]
+            set battery battery - cleaner_consumption_battery
+          ]
+          if cleaner_stop = 1 [
+            set battery battery - (cleaner_consumption_battery / 10)
+          ]
+          if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]];; -15 -15 por causa dos ticks
+          if capacity < cleaner_max_capacity[
+            ask patch-here [
+              if pcolor != cor_chao and pcolor != black and pcolor != blue and pcolor != cor_objetos or [cleaner_stop] of cleaner 0 = 1[
+                let cor_lixo pcolor
+                let cod_cor (cor_lixo mod 10)
+                ask cleaners [
+                  if cod_cor >= 2.5 and cod_cor <= 3.5 and cleaner_max_capacity >= capacity + 3[
+                    if Cleaner_Modo = eco or Cleaner_Modo = med[
+                      set pcolor pcolor + 1.5
+                      set capacity capacity + 1
+                      set cleaner_stop 1
+                    ]
+                    if Cleaner_Modo = turbo [
+                      set capacity capacity + 3
+                      set pcolor cor_chao
+                      set cleaner_stop 0
+                    ]
+                  ]
+                  if cod_cor >= 4 and cod_cor <= 6 and cleaner_max_capacity >= capacity + 2[
+                    if Cleaner_Modo = eco[
+                      set pcolor pcolor + 2.5
+                      set capacity capacity + 1
+                      set cleaner_stop 1
+                    ]
+                    if Cleaner_Modo = med or Cleaner_Modo = turbo [
+                      set capacity capacity + 2
+                      set pcolor cor_chao
+                      set cleaner_stop 0
+                    ]
+                  ]
+                  if cod_cor >= 6.5 and cleaner_max_capacity >= capacity + 1[
+                    set capacity capacity + 1
+                    set pcolor cor_chao
+                    set cleaner_stop 0
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ];;fim encontrar residuo
+      ]
+      ;ask patch-here [set pcolor red]; pinta area vizinha vermelho (debug)
+      ;ask neighbors [ set pcolor red ];; pinta area vizinha vermelho (debug)
+    ]
+  ]
+
+  ;;ações dos polluters
+  ask polluters[
+    ;;movimento
+    ifelse patch-ahead 1 = nobody [set heading random 360][
+      if (any? neighbors with [pcolor = cor_objetos]) [
+        right random 90 - random 90
+      ]
+    ]
+    if patch-ahead 1 != nobody[
+      if not (any? neighbors with [pcolor = cor_objetos]) [fd 1]
+    ]
+;    move-to patch-here
+;    if ([pcolor] of patch-here = cor_objetos) [
+;      let target-patch min-one-of (patches in-radius 5 with [pcolor = cor_chao]) [distance myself]
+;      move-to target-patch
+;    ]
+
+    let rand_num random 100
+    if (rand_num < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
+      let conjunto_cor [0]
+      if color = 5  [set conjunto_cor item 0 tipo_lixo]
+      if color = 35 [set conjunto_cor item 1 tipo_lixo]
+      if color = 55 [set conjunto_cor item 2 tipo_lixo]
+      ask patch-here[
+        if pcolor = cor_chao[ ; se estiver em chao
+          let tom_de_cor_rand item (random (length conjunto_cor)) conjunto_cor
+          set pcolor tom_de_cor_rand
+
+        ]
+      ]
+    ]
+  ]
+  tick
+end
+
+to go_n
+  repeat n [
+    go_once
+  ]
+end

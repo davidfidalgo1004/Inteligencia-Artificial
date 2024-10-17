@@ -103,16 +103,28 @@ to setup
   set lista_objetos []
   ask patches[
     set i count patches with [pcolor = cor_objetos]
-    if pcolor = cor_chao and i < num_obstaculos * 4[
+    if pcolor = cor_chao and i < num_obstaculos * 4 and pxcor < 16 and pycor > -16[
       let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
-      if [pcolor] of patches at-points object1 = (n-values (length object1) [cor_chao]) [ ;;;IMPORTANTE, BOA LOGICA PENSADA AQUI (ou pareceu boa ao pensar nela :p)
-        ask patches at-points object1 [set pcolor cor_objetos]
+      let pode_gerar true
+      foreach object1 [ coord ->
+        let x item 0 coord
+        let y item 1 coord
+        if [pcolor] of patch x y != cor_chao [
+          set pode_gerar false
+        ]
+      ]
+      if pode_gerar [
+        foreach object1 [coord ->
+          let x first coord
+          let y last coord
+          ask patch x y [
+            set pcolor cor_objetos  ;; Replace cor_objetos with the desired color
+          ]
+        ]
         set lista_objetos fput object1 lista_objetos
-        show lista_objetos
       ]
     ]
   ]
-  show one-of lista_objetos
 end
 
 ;go_once, cujo programa permita: que os agentes circulem no mundo de forma aleatória (um só tick);
@@ -145,25 +157,6 @@ to go_once
       set depositos remove (list pxcor pycor) depositos
     ]
   ]
-  ;;atualizar obstaculos
-  ask patches[
-    set i count patches with [pcolor = cor_objetos]
-    if i < num_obstaculos * 4[
-      let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
-      if [pcolor] of patches at-points object1 = (n-values (length object1) [cor_chao]) [ ;;;IMPORTANTE, BOA LOGICA PENSADA AQUI (ou pareceu boa ao pensar nela :p)
-        ask patches at-points object1 [set pcolor cor_objetos]
-        set lista_objetos lput object1 lista_objetos
-        show lista_objetos
-      ]
-    ]
-  ]
-    if i > num_obstaculos * 4[
-      show lista_objetos
-;      let eliminar_objetos one-of lista_objetos
-;      show eliminar_objetos
-;      ask patches at-points eliminar_objetos [set pcolor cor_chao]
-;      set lista_objetos remove eliminar_objetos lista_objetos
-    ]
 
   ;;ações do cleaner
   ask cleaners[
@@ -184,6 +177,7 @@ to go_once
           ]
         ]
       ][
+        ;; HEADINGS E AS SUAS CONDICOES
         ;;1º verificar a bateria (modelo Robot1 dirige-se ao posto quando chega a uma certa percentagem)
         ask cleaners[
           ifelse battery <= 46 * cleaner_consumption_battery[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
@@ -215,9 +209,20 @@ to go_once
               ]
             ]
           ]
+          ;; MOVER (EM FUNCAO DOS HEADINGS)
           if cleaner_stop = 0[
-            fd 1
-            set battery battery - cleaner_consumption_battery
+            if patch-ahead 1 != nobody [
+              if [pcolor] of patch-at-heading-and-distance heading 1 = cor_objetos [
+                right 180
+                right random 90 - random 90
+              ]
+              if battery > 0 [fd 1]
+            ]
+            ifelse battery <= 0 [
+              set battery 0
+            ][
+              set battery battery - cleaner_consumption_battery
+            ]
           ]
           if cleaner_stop = 1 [
             set battery battery - (cleaner_consumption_battery / 10)
@@ -273,17 +278,17 @@ to go_once
   ask polluters[
     ;;movimento
     ifelse patch-ahead 1 = nobody [set heading random 360][
-      if (any? neighbors with [pcolor = cor_objetos]) [
+      if [pcolor] of patch-at-heading-and-distance heading 1 = cor_objetos [
+        right 180
         right random 90 - random 90
       ]
+      fd 1
     ]
-    ;;sujar ou não sujar, eis a questão
-    fd 1
-    move-to patch-here
-    if ([pcolor] of patch-here = cor_objetos) [
-      let target-patch min-one-of (patches in-radius 5 with [pcolor = cor_chao]) [distance myself]
-      move-to target-patch
-    ]
+;    move-to patch-here
+;    if ([pcolor] of patch-here = cor_objetos) [
+;      let target-patch min-one-of (patches in-radius 5 with [pcolor = cor_chao]) [distance myself]
+;      move-to target-patch
+;    ]
 
     let rand_num random 100
     if (rand_num < prob_sujar * 100) [;; suja caso o nº atoa for menor que o da prob_sujar
@@ -390,7 +395,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 100
 500
-300.0
+115.0
 5
 1
 ml
@@ -405,7 +410,7 @@ cleaner_tempo_carregamento
 cleaner_tempo_carregamento
 1
 100
-63.0
+20.0
 1
 1
 ticks
@@ -420,7 +425,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.001
+1.0
 0.01
 1
 NIL
@@ -435,7 +440,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-0.001
+1.0
 0.01
 1
 NIL
@@ -450,7 +455,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-0.001
+0.96
 0.01
 1
 NIL
@@ -528,8 +533,8 @@ true
 true
 "" ""
 PENS
-"Sujo" 1.0 2 -5298144 true "" "plot count patches with [pcolor != 8.5 ]"
-"Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = 8.5]"
+"Sujo" 1.0 2 -5298144 true "" "plot count patches with [pcolor != cor_chao ] - num_depositos - 1"
+"Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = cor_chao]"
 
 SLIDER
 12
@@ -540,7 +545,7 @@ num_depositos
 num_depositos
 2
 10
-4.0
+10.0
 1
 1
 NIL
@@ -553,9 +558,9 @@ SLIDER
 263
 cleaner_capacity_battery
 cleaner_capacity_battery
-1500
+90
 5500
-1800.0
+3380.0
 10
 1
 mAh
@@ -581,7 +586,7 @@ cleaner_tensao_battery
 cleaner_tensao_battery
 14
 18
-14.4
+14.8
 0.1
 1
 V
@@ -616,8 +621,8 @@ SLIDER
 num_obstaculos
 num_obstaculos
 0
-10
-2.0
+30
+30.0
 1
 1
 NIL
