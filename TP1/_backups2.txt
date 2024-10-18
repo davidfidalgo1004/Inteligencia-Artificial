@@ -126,28 +126,3 @@ if [pcolor] of patch-ahead 1 = cor_objetos [
         ]
 		
 		
-		ask patches[
-    set i count patches with [pcolor = cor_objetos]
-    if pcolor = cor_chao and i < num_obstaculos * 4[
-      let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
-      
-      let pode_gerar true
-      foreach object1 [ coord ->
-        let x item 0 coord
-        let y item 1 coord
-        if [pcolor] of patch x y != cor_chao [
-          set pode_gerar false
-        ]
-      ]
-      if pode_gerar [
-        foreach object1 [coord ->
-          let x first coord
-          let y last coord
-          ask patch x y [
-            set pcolor cor_objetos  ;; Replace cor_objetos with the desired color
-          ]
-        ]
-        set lista_objetos fput object1 lista_objetos
-      ]
-    ]
-  ]
