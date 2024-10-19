@@ -1,0 +1,128 @@
+if [pcolor] of patch-ahead 1 = cor_objetos [
+              set heading heading + one-of [-90 90]
+              ]
+			  
+			  
+			  
+			  if [pcolor] of patch-ahead 1 = cor_objetos [
+              set heading heading + one-of [-90 90]
+              ]
+			  
+			  
+			  if (any? neighbors with [pcolor = cor_objetos]) [
+                right 180
+                right random 90 - random 90
+              ]
+			  
+			  
+			  
+			  
+			   ask patches[
+    set i count patches with [pcolor = cor_objetos]
+    if pcolor = cor_chao and i < num_obstaculos * 4[
+      let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
+      show object1   
+	  
+	  
+	  
+	  let allHaveColor true
+    foreach object1 [coord ->
+      let x first coord
+      let y last coord
+      if [pcolor] of patch x y != cor_chao [
+        set allHaveColor false
+      ]
+    ]
+    
+    ;; If all patches have the specific color, change their color
+    if allHaveColor [
+      foreach object1 [coord ->
+        let x first coord
+        let y last coord
+        ask patch x y [
+          set pcolor cor_objetos  ;; Replace cor_objetos with the desired color
+        ]
+		
+		
+		
+		;ERRO, mas guardar como memo
+      ;      show object1      
+      ;      if [pcolor] of patches at-points object1 = (n-values (length object1) [cor_chao]) [ ;;;IMPORTANTE, BOA LOGICA PENSADA AQUI (ou pareceu boa ao pensar nela :p)
+      ;        ask patches at-points object1 [set pcolor cor_objetos]
+      ;        set lista_objetos fput object1 lista_objetos
+      ;        show lista_objetos
+      
+	  
+	  
+	  ask patches[
+    set i count patches with [pcolor = cor_objetos]
+    if pcolor = cor_chao and i < num_obstaculos * 4[
+      let object1 (list (list pxcor pycor) (list (pxcor + 1) pycor) (list pxcor (pycor - 1)) (list (pxcor + 1) (pycor - 1)))
+      
+      let pode_gerar true
+      foreach object1 [ coord ->
+        let x item 0 coord
+        let y item 1 coord
+        if [pcolor] of patch x y != cor_chao [
+          set pode_gerar false
+        ]
+      ]
+      if pode_gerar [
+        foreach object1 [coord ->
+          let x first coord
+          let y last coord
+          ask patch x y [
+            set pcolor cor_objetos  ;; Replace cor_objetos with the desired color
+          ]
+        ]
+        set lista_objetos fput object1 lista_objetos
+      ]
+    ]
+  ]
+  
+  let allHaveColor true
+    foreach object1 [coord ->
+      let x first coord
+      let y last coord
+      if [pcolor] of patch x y != cor_chao [
+        set allHaveColor false
+      ]
+    ]
+    
+    ;; If all patches have the specific color, change their color
+    if allHaveColor [
+      foreach object1 [coord ->
+        let x first coord
+        let y last coord
+        ask patch x y [
+          set pcolor cor_objetos  ;; Replace cor_objetos with the desired color
+        ]
+		
+		
+		
+		let pode_gerar true
+      foreach object1 [ coord ->
+        let x item 0 coord
+        let y item 1 coord
+        if [pcolor] of patch x y != cor_chao [
+          set pode_gerar false
+        ]
+      ]
+      if pode_gerar [
+        foreach object1 [coord ->
+          let x first coord
+          let y last coord
+          ask patch x y [
+            set pcolor cor_objetos  ;; Replace cor_objetos with the desired color
+          ]
+        ]
+		
+		foreach object1 [ coord ->
+          let x item 0 coord
+          let y item 1 coord
+          if [pcolor] of patch x y != cor_chao [
+            set pode_gerar false
+          ]
+        ]
+		
+		
