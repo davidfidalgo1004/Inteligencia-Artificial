@@ -69,7 +69,7 @@ to setup
 
   ask polluters[
     set shape "cow"
-    set size 1.5
+    set size 2
     set color white
     set label-color black
     set label who
@@ -180,7 +180,7 @@ to go_once
         ;; HEADINGS E AS SUAS CONDICOES
         ;;1º verificar a bateria (modelo Robot1 dirige-se ao posto quando chega a uma certa percentagem)
         ask cleaners[
-          ifelse battery <= 46 * cleaner_consumption_battery[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
+          ifelse battery <= 100 * cleaner_consumption_battery[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
             if last_cleaning_location = [0 0][;; aspirador guarda sitio onde estava a aspirar até ter de ir carregar bateria
               set last_cleaning_location (list round xcor round ycor)
               if ticks > tick_bug_fix [set last_cleaning_location [-15 -15] set tick_bug_fix tick_bug_fix + 10000]; senao ele fica la em cima e nao volta.... porque nao tem movimentos random suficiente para voltar para baixo
@@ -425,7 +425,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-1.0
+0.28
 0.01
 1
 NIL
@@ -440,7 +440,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-1.0
+0.59
 0.01
 1
 NIL
@@ -455,7 +455,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-0.96
+0.31
 0.01
 1
 NIL
@@ -545,7 +545,7 @@ num_depositos
 num_depositos
 2
 10
-10.0
+6.0
 1
 1
 NIL
@@ -560,7 +560,7 @@ cleaner_capacity_battery
 cleaner_capacity_battery
 90
 5500
-3380.0
+2740.0
 10
 1
 mAh
@@ -600,7 +600,7 @@ CHOOSER
 Cleaner_Modo
 Cleaner_Modo
 "Eco Mode" "Medium Mode" "Full Mode"
-2
+0
 
 MONITOR
 713
@@ -622,7 +622,7 @@ num_obstaculos
 num_obstaculos
 0
 30
-30.0
+17.0
 1
 1
 NIL
