@@ -63,8 +63,8 @@ to setup
 
   ask cleaners[
     set depositos []
-    set shape "vaccum"
-    set size 2.5
+    set shape ""
+    set size 1.5
     ;;origem do cleaner (posto de carregamento)
     setxy item 0 posto_carregamento item 1 posto_carregamento
     set battery cleaner_max_battery
