@@ -395,7 +395,7 @@ cleaner_max_capacity
 cleaner_max_capacity
 100
 500
-115.0
+100.0
 5
 1
 ml
@@ -410,7 +410,7 @@ cleaner_tempo_carregamento
 cleaner_tempo_carregamento
 1
 100
-20.0
+1.0
 1
 1
 ticks
@@ -425,7 +425,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.28
+1.0
 0.01
 1
 NIL
@@ -440,7 +440,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-0.59
+1.0
 0.01
 1
 NIL
@@ -455,7 +455,7 @@ polluter_3_prob_sujar
 polluter_3_prob_sujar
 0
 1
-0.31
+1.0
 0.01
 1
 NIL
@@ -518,10 +518,10 @@ Cleaner - Capacidade
 11
 
 PLOT
-472
-360
-937
-549
+471
+371
+936
+560
 Contaminação Vs Limpeza
 Limpo
 Sujo
@@ -545,7 +545,7 @@ num_depositos
 num_depositos
 2
 10
-6.0
+10.0
 1
 1
 NIL
@@ -560,7 +560,7 @@ cleaner_capacity_battery
 cleaner_capacity_battery
 90
 5500
-2740.0
+5500.0
 10
 1
 mAh
@@ -586,7 +586,7 @@ cleaner_tensao_battery
 cleaner_tensao_battery
 14
 18
-14.8
+15.8
 0.1
 1
 V
@@ -600,7 +600,7 @@ CHOOSER
 Cleaner_Modo
 Cleaner_Modo
 "Eco Mode" "Medium Mode" "Full Mode"
-0
+2
 
 MONITOR
 713
@@ -622,7 +622,7 @@ num_obstaculos
 num_obstaculos
 0
 30
-17.0
+30.0
 1
 1
 NIL
@@ -635,6 +635,17 @@ MONITOR
 508
 Minutes Passed
 ticks / 60
+0
+1
+11
+
+MONITOR
+287
+514
+429
+559
+Hours Passed
+ticks / 60 / 60
 0
 1
 11

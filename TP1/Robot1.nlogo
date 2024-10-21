@@ -5,6 +5,8 @@ breed[polluters polluter]
 cleaners-own[battery capacity recharge_time last_cleaning_location cleaner_map]
 polluters-own[prob_sujar polluter_corlixo]
 
+;modo mapear depositos (zig-zag até percorrer todo o espaço da sala)
+; NAO ASPIRA
 to Modo_Map
   if xcor = min-pxcor[ ;chega borda esquerda
     ifelse patch-ahead 1.5 = nobody[ ; se é parede
@@ -87,15 +89,15 @@ to go_once
   ;;atualizar probabilidades dos sliders
   ask polluter 1 [
     set prob_sujar polluter_1_prob_sujar
-    set polluter_corlixo 35
+    set polluter_corlixo 33
   ]
   ask polluter 2 [
     set prob_sujar polluter_2_prob_sujar
-    set polluter_corlixo 25
+    set polluter_corlixo 53
   ]
   ask polluter 3 [
     set prob_sujar polluter_3_prob_sujar
-    set polluter_corlixo 115
+    set polluter_corlixo 3
   ]
 
   ;;ask polluters [show prob_sujar];; (debug) 32.5 42.5 52.5
@@ -117,7 +119,7 @@ to go_once
   ask cleaners[
     ;ask neighbors [set pcolor 39];; pinta area vizinha da cor do chao (debug)
     ;ask patch-here [set pcolor 39]; pinta area vizinha vermelho (debug)
-    let cleaner_atual who ;; para permitir mais cleaners e usar o codigo abaixo
+    let cleaner_atual who ;; para permitir mais cleaners (caso fosse necessário) e usar o codigo abaixo
     ask patch-here[
       if pcolor != blue [
         let coordenadas_depositos (list round pxcor round pycor)
@@ -144,7 +146,7 @@ to go_once
           ifelse battery <= 50 * battery_loss[;; dirigir ao posto de carregamento quando so faltarem 50 movimentos
             if last_cleaning_location = [0 0][;; aspirador guarda sitio onde estava a aspirar até ter de ir carregar bateria
               set last_cleaning_location (list round xcor round ycor)
-              if ticks > tick_bug_fix [set last_cleaning_location [-15 -15] set tick_bug_fix tick_bug_fix + 10000]; senao ele fica la em cima e nao volta.... porque nao tem movimentos random suficiente para voltar para baixo
+              if ticks > tick_bug_fix [set last_cleaning_location [-15 -15] set tick_bug_fix tick_bug_fix + 10000]; senao ele fica la em cima e nao volta.... porque nao tem movimentos random suficiente (quando bateria consome muito)  para voltar para baixo
             ]
             facexy item 0 posto_carregamento item 1 posto_carregamento ;; código direcçao à bateria
           ][
@@ -180,7 +182,7 @@ to go_once
             ][
               ;;movimento modo aspirar
               ifelse last_cleaning_location != [0 0][ ;; voltar ao local anterior
-                facexy item 0 last_cleaning_location item 1 last_cleaning_location ;;;TO UPGRADE: virar caso bata enquanto vai para sitio dele
+                facexy item 0 last_cleaning_location item 1 last_cleaning_location
               ][ ;aspirar área desconhecida:
                  ;; logica de virar quando bate em algo para cobrir terreno desconhecido (retirado de: https://youtu.be/O7ozptNs1FY?si=MSywmYDwbmLPsnCb )
                 if patch-ahead 1 = nobody and cleaner_map = FALSE [set heading random 360]
@@ -206,7 +208,8 @@ to go_once
           if cleaner_map = TRUE [
             Modo_Map
             fd 1
-            set battery battery - battery_loss
+            if last_cleaning_location = (list round xcor round ycor) or last_cleaning_location = [-15 -15] [ set last_cleaning_location [0 0]]
+            set battery battery - 0.01 ; modo mapping, gasta menos bateria
           ]
         ]
         ;ask patch-here [set pcolor red]; pinta area vizinha vermelho (debug)
@@ -230,7 +233,6 @@ to go_once
     ]
 
   ]
-
   ask polluter 2[
     ;;movimento
     if patch-ahead 1 = nobody[set heading random 360]
@@ -244,9 +246,7 @@ to go_once
         ]
       ]
     ]
-
   ]
-
   ask polluter 3[
     ;;movimento
     if patch-ahead 1 = nobody[set heading random 360]
@@ -260,7 +260,6 @@ to go_once
         ]
       ]
     ]
-
   ]
   tick
 end
@@ -340,18 +339,18 @@ SLIDER
 cleaner_max_battery
 cleaner_max_battery
 0
-100
-100.0
+1000
+1000.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-492
-439
-637
-484
+469
+422
+614
+467
 Cleaner - Bateria Restante 
 [battery] of cleaner 0
 2
@@ -397,7 +396,7 @@ polluter_1_prob_sujar
 polluter_1_prob_sujar
 0
 1
-0.28
+0.13
 0.01
 1
 NIL
@@ -412,7 +411,7 @@ polluter_2_prob_sujar
 polluter_2_prob_sujar
 0
 1
-0.02
+0.4
 0.01
 1
 NIL
@@ -432,26 +431,6 @@ polluter_3_prob_sujar
 1
 NIL
 HORIZONTAL
-
-TEXTBOX
-697
-225
-821
-267
-tempo carregamento:\ndo min ao max de bateria\n
-11
-0.0
-1
-
-TEXTBOX
-693
-118
-815
-174
-Mudar \"cleaner_max_battery\" enquanto o aspirador trabalha pode prender o aspirador numa rota específica 
-11
-0.0
-1
 
 BUTTON
 658
@@ -499,10 +478,10 @@ n
 Number
 
 INPUTBOX
-648
-429
-724
-489
+625
+412
+701
+472
 battery_loss
 1.0
 1
@@ -510,10 +489,10 @@ battery_loss
 Number
 
 MONITOR
-742
-437
-880
-482
+719
+420
+857
+465
 Cleaner - Capacidade
 [capacity] of cleaner 0
 17
@@ -536,14 +515,14 @@ true
 true
 "" ""
 PENS
-"Sujo" 1.0 2 -5298144 true "" "plot count patches with [pcolor != 39 ]"
-"Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = 39]"
+"Sujo" 1.0 0 -5298144 true "" "plot count patches with [pcolor != 39 ] - num_depositos - 1"
+"Limpo" 1.0 2 -14439633 true "" "plot count patches with [pcolor = 39] "
 
 SLIDER
-910
-443
-1017
-476
+887
+426
+994
+459
 num_depositos
 num_depositos
 2
@@ -553,6 +532,16 @@ num_depositos
 1
 NIL
 HORIZONTAL
+
+TEXTBOX
+7
+452
+475
+549
+cleaner_max_battery\n~Valores abaixo de 150 podem interferir com o funcionamento do cleaner \n(visto que passam a gastar +- 50% dos movimentos em deslocações ao posto de carregamento)
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
