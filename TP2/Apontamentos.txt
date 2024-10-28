@@ -1,0 +1,16 @@
+Sugestoes:
+-Formar keywords para começar pesquisa
+-pesquisar na net e depois ir a bases de dados e repos
+--Sites acreditados: 
+	b-on (particle swar optimization array)
+	springer.com
+	ieeexplorer.iee.org
+	sciencedirect.com
+	dl.acm.org
+	scholar.google.com
+	researchgate.net
+--Extra Cont.
+	youtube
+	ted talks
+	perplexity
+	elicit
