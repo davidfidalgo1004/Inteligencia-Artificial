@@ -2,7 +2,7 @@ Sugestoes:
 -Formar keywords para começar pesquisa
 -pesquisar na net e depois ir a bases de dados e repos
 --Sites acreditados: 
-	b-on (particle swar optimization array)
+	b-on.com (particle swarm optimization array)
 	springer.com
 	ieeexplorer.iee.org
 	sciencedirect.com
