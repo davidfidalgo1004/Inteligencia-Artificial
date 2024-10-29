@@ -10,12 +10,15 @@ delta = 0.02;
 x_now = rand * 1.6;
 x_old = x_now;
 while i < 300
-x_now = x_now + 2 * (rand - 0.5) * delta;
+x_now = x_old + 2 * (rand - 0.5) * delta;
 if f(x_now) > f(x_old)
     %ta a subir
-    plot(x_now,f(x_now), 'o') 
+
+    plot(x_now,f(x_now), 'o')
+    x_old = x_now
+
 end 
-x_old = x_now;
+
 i = i + 1;
 
 end
