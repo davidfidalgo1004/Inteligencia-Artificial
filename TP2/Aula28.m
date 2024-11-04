@@ -17,7 +17,7 @@ if f(x_now) > f(x_old)
     %ta a subir
 
     plot(x_now,f(x_now), 'o')
-    x_old = x_now
+    x_old = x_now;
 end 
 f_evolucao(i) = f(x_old);
 i = i + 1;
@@ -25,7 +25,7 @@ i = i + 1;
 end
 
 figure;
-plot(1:300, f_evolucao); % plota a evolução de f(x_now)
+plot(1:(i - 1), f_evolucao); % plota a evolução de f(x_now)
 xlabel('Iteração');
 ylabel('f(x_{now})');
 title('Evolução de f(x_{now}) a cada iteração');
