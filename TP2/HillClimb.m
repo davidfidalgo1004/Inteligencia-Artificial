@@ -15,6 +15,7 @@ num_total = 1;
 num_tent = 1;
 f_evolucao = [];
 x_evolucao = [];
+f_tentativa = [];
 j = 1;
 
 % Loop principal
@@ -58,6 +59,7 @@ while num_tent <= num_total
         num_total = num_total + 10;
         f_max = f(x_now);
     end
+    f_tentativa(num_tent) = f(x_now);
     num_tent = num_tent + 1;
 end
 
@@ -75,4 +77,9 @@ xlabel('Iteração');
 ylabel('x');
 title('Evolução de x a cada iteração');
 
+figure;
+plot(1:num_total, f_tentativa);
+xlabel('Número Teste');
+ylabel('f(x) max');
+title('Evolução f(x) a cada teste');
 hold off;
