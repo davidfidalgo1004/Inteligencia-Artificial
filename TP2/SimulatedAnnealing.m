@@ -1,44 +1,82 @@
 close all
 clear all
-f = @(x) 4*(sin(5*pi*x+0.5)).^6 .* exp(log2((x-0.8).^2)); % função
-x = linspace(0,1.6,200);
-y=f(x);
-plot(x,y,'b');
-hold on
 
-t = 0; % iteração
-T = 90; % temperatura max use
-nRep = 300; % n_reps
-alfa = 0.94; % fator decaimento
-t_rand = rand * 200;
-while(t <= nRep)
-    while (n <= )
-        xi = (rand - 0.5) * delta;
-        x_new = x_old + 2 * xi;
-        % Verifica se x_now está dentro do intervalo [0, 1.6]
-        if x_new < 0
-            x_new = 0;
-        elseif x_new > 1.6
-            x_new = 1.6;
+% Função
+f = @(x) 4*(sin(5*pi*x+0.5)).^6 .* exp(log2((x-0.8).^2));
+
+% Intervalo e visualização inicial
+x = linspace(0,1.6,1000);
+y = f(x);
+figure(1)
+plot(x, y, 'b');
+hold on;
+
+% Parâmetros do SA
+t = 1;
+Tmax = 90;        % Temperatura maxima sugerida nos powerpoints do prof
+T = Tmax;         % Temperatura inicial
+alfa = 0.94;      % Fator de decaimento, parece melhor em 0.96 aqui
+cicles = 300;     % Número de ciclos
+Tit = 5;          % Iterações por temperatura
+t_i = 1;          % Iterações do plot da temperatura
+x_t = rand * 1.6; % Solução inicial aleatória
+k = 0.8 * 1.6;    % Escalar do passo (tamanho máximo do primeiro passo)
+f_evolucao = zeros(cicles, 1); % Evolução da y
+t_evolucao = zeros(cicles * Tit, 1); % Evolução da temperatura
+p_evolucao = zeros(cicles * Tit, 1); % Evolução da probabilidade
+
+while t <= cicles
+    n = 1;
+    while n <= Tit
+        xi = k * ((T / Tmax) ^ 0.5); % tamanho do passo a dar
+        x_new = x_t + (rand - 0.5) * xi; % x novo para testar
+        x_new = max(0, min(1.6, x_new)); % confirmar intervalo
+        dE = f(x_new) - f(x_t); % Calcula delta de energia
+        p = exp(-abs(dE) / T); % Probabilidade de aceitação
+
+        if dE >= 0 || rand < p % Critérios de movimentação
+            x_t = x_new; % se aceite muda
         end
-        dE = f(x_new)-f(xi); % delta
-        p = exp(-abs(dE)/T); % probabilidade
-        if (f(x_new)- f(x(t))) > 0 % Uphill movement
-            x(t)=x_new; 
-            f(x(t))=f(x_new);
-        elseif rand(0,1) > p % Downhill movement
-            x(t)=x_new;
-            f(x(t))=f(x_new);
+
+        f_evolucao(t) = x_t; % guarda x atual num array
+        if f(x_t) >= f(max(f_evolucao(t)))
+            max_t = x_t;
         end
-        n=n+1;
-        plot(x(t),f(x(t)), 'o')
-        fprintf("nao")
+
+        plot(x_t, f(x_t), 'ro'); % Visualiza ponto atual
+        n = n + 1;
+        
+        t_evolucao(t_i) = T;
+        p_evolucao(t_i) = p;       
+        t_i = t_i + 1;
     end
-    T=Tnew;
-    t=t+1;
+
+    T = alfa * T; % Atualiza temperatura e armazena evolução
+    t = t + 1;
 end
-plot(1:(i - 1), f_evolucao); % plota a evolução de f(x_now)
+
+plot(x_t, f(x_t), 'go'); % último ponto
+plot(max_t, f(max_t), 'ko'); % ponto máximo
+
+% Gráfico da evolução da função
+figure(2);
+plot(1:cicles, f(f_evolucao), '-o');
 xlabel('Iteração');
 ylabel('f(x_{now})');
-title('Evolução de f(x_{now}) a cada iteração');
+title('Evolução de f(x_{now})');
+grid on;
+
+% Gráfico da evolução da temperatura
+figure(3);
+plot(1:length(t_evolucao), t_evolucao, '-o');
+xlabel('Iteração');
+ylabel('Temperatura');
+title('Evolução de Temperatura');
+
+% Gráfico da evolução da probabilidade
+figure(4);
+plot(1:length(t_evolucao), p_evolucao, '-o');
+xlabel('Iteração');
+ylabel('Probabilidade');
+title('Evolução de Probabilidade');
 
