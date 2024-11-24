@@ -1,0 +1,36 @@
+clc
+clear all
+close all
+
+%MAIN
+%Bragança
+%Chaves
+%Guimarães
+%Braga
+%Viana do Castelo
+%Valença
+%Barcelos
+%Porto
+%Aveiro
+%Agueda
+%Viseu
+%Lamengo
+%Peso da Regua
+%Vila Real
+coordenadas_cities = [ 
+    1 41.49 6.45;  % Bragança -
+    2 41.18 7.45;  % Vila Real -
+    3 41.44 7.28;  % Chaves
+    4 41.27 8.18;  % Guimarães
+    5 41.33 8.26;  % Braga
+    6 41.42 8.50;  % Viana do Castelo
+    7 42.02 8.38;  % Valença
+    8 41.32 8.37;  % Barcelos
+    9 41.11 8.36;  % Porto
+    10 40.38 8.39; % Aveiro
+    11 40.34 8.27; % Agueda
+    12 40.39 7.
+];
+
+cities = [coordenadas_cities(:,2)';coordenadas_cities(:,3)'];
+apresenta_cidades(cities)

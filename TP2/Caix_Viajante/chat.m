@@ -1,25 +1,32 @@
 % Coordenadas das cidades (latitude, longitude)
 cidades = [
-    41.15, -8.61;  % Porto
-    38.72, -9.14;  % Lisboa
-    40.64, -8.65;  % Aveiro
-    41.54, -8.42;  % Braga
-    37.02, -7.93;  % Faro
-    39.74, -8.82;  % Leiria
-    38.88, -6.97;  % Évora
-    40.21, -8.41;  % Coimbra
-    41.12, -8.34;  % Guimarães
-    41.37, -8.29;  % Vila do Conde
-    38.57, -7.91;  % Beja
-    40.66, -7.91;  % Viseu
-    39.82, -7.49;  % Castelo Branco
-    39.68, -8.44   % Tomar
+    41.8167, -6.7500;  % Bragança
+    41.3000, -7.7500;  % Vila Real
+    41.7333, -7.4667;  % Chaves
+    41.4500, -8.3000;  % Guimarães
+    41.5500, -8.4333;  % Braga
+    41.7000, -8.8333;  % Viana do Castelo
+    42.0333, -8.6333;  % Valença do Minho
+    41.5333, -8.6167;  % Barcelos
+    41.1833, -8.6000;  % Porto
+    40.6333, -8.6500;  % Aveiro
+    40.5667, -8.4500;  % Águeda
+    40.6500, -7.9167;  % Viseu
+    41.1000, -7.8167;  % Lamego
+    41.1667, -7.7833;  % Peso da Régua
 ];
 
 n = size(cidades, 1);  % Número de cidades
 
-% Função de cálculo da distância euclidiana
-distancia = @(c1, c2) sqrt((c1(1) - c2(1))^2 + (c1(2) - c2(2))^2);
+% Nomes das cidades
+nomes = { ...
+    'Bragança', 'Vila Real', 'Chaves', 'Guimarães', 'Braga', ...
+    'Viana do Castelo', 'Valença do Minho', 'Barcelos', 'Porto', ...
+    'Aveiro', 'Águeda', 'Viseu', 'Lamego', 'Peso da Régua' ...
+};
+
+% calculo de distancia entre dois pontos
+distancia = @(c1, c2) sqrt((c1(1) - c2(1))^2 + (c1(2) - c2(2))^2)
 
 % Função de custo (soma total das distâncias no percurso)
 calculaCusto = @(percurso) sum(arrayfun(@(i) distancia(cidades(percurso(i), :), cidades(percurso(mod(i, n) + 1), :)), 1:n));
@@ -88,8 +95,12 @@ for i = 1:n
     quiver(cidadeAtual(2), cidadeAtual(1), dx, dy, 0, 'r', 'LineWidth', 1.5, 'MaxHeadSize', 0.5);
 end
 
-% Adicionar as cidades como pontos
+% Adicionar as cidades como pontos e mostrar os nomes
 plot(cidades(:, 2), cidades(:, 1), 'bo', 'MarkerSize', 8, 'MarkerFaceColor', 'b');
+for i = 1:n
+    % Adicionar o nome de cada cidade próximo ao ponto
+    text(cidades(i, 2), cidades(i, 1), nomes{i}, 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right', 'FontSize', 8);
+end
 
 title('Melhor percurso encontrado com setas');
 xlabel('Longitude');
