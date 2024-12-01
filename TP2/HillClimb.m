@@ -63,13 +63,26 @@ while num_tent <= num_total
     num_tent = num_tent + 1;
 end
 
+% Identificar o valor máximo da função e o x correspondente
+[f_max_value, idx_max] = max(f_evolucao); % Encontra o máximo em f_evolucao
+x_max = x_evolucao(idx_max); % Identifica o valor correspondente de x no vetor x_evolucao
+
+% Destacar o máximo no gráfico da função
+plot(x_max, f_max_value, '-o', 'MarkerSize', 10, ...
+     'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'yellow'); % Destaca o ponto no gráfico inicial
+
 % Gráfico da evolução de f(x) e x
 figure;
 subplot(2, 1, 1);
 plot(1:(j - 1), f_evolucao); % Plota a evolução de f(x_now)
+hold on;
+[f_max_evolucao, idx_max_evolucao] = max(f_evolucao); % Máximo na evolução
+plot(idx_max_evolucao, f_max_evolucao, '-o', 'MarkerSize', 8, ...
+     'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'yellow');
 xlabel('Iteração');
 ylabel('f(x)');
 title('Evolução de f(x_{now}) a cada iteração');
+hold off;
 
 subplot(2, 1, 2);
 plot(1:(j - 1), x_evolucao); % Plota a evolução de x
@@ -77,9 +90,15 @@ xlabel('Iteração');
 ylabel('x');
 title('Evolução de x a cada iteração');
 
+% Gráfico da evolução de f(x) máximo
 figure;
-plot(1:num_total, f_tentativa);
+plot(1:num_total, f_tentativa, '-o'); % Plota os valores
+hold on;
+[f_max_tent, idx_max_tent] = max(f_tentativa); % Máximo dos testes
+plot(idx_max_tent, f_max_tent, '-o', 'MarkerSize', 10, ...
+     'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'yellow');
 xlabel('Número Teste');
 ylabel('f(x) max');
 title('Evolução f(x) a cada teste');
+legend('f(x)', 'Máximo Encontrado', 'Location', 'Best');
 hold off;

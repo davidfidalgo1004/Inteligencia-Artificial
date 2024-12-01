@@ -34,6 +34,7 @@ distancia = @(c1, c2) 2 * R_Terra * ...
     asin(sqrt(sin((deg2rad(c2(1)) - deg2rad(c1(1))) / 2)^2 + ...
               cos(deg2rad(c1(1))) * cos(deg2rad(c2(1))) * ...
               sin((deg2rad(c2(2)) - deg2rad(c1(2))) / 2)^2));
+
 % Função J (soma total das distâncias no percurso)
 calculaCusto = @(percurso) sum(arrayfun(@(i) ...
     distancia(cities(:, percurso(i)), cities(:, percurso(mod(i, num_cidades) + 1))), ...
@@ -56,7 +57,8 @@ Tit = T_inicial;
 
 historico_temperatura = [];  % Vetor para guardar a temperatura ao longo das iterações
 historico_custos = []; 
-
+historico_probs=[];
+it=0;
 while Tit > T_final
     i = 0; % Certifique-se de inicializar o contador
     while i < iteracoes
@@ -70,17 +72,21 @@ while Tit > T_final
 
         % Decisão de aceitação
         delta = custoVizinho - custoAtual;
-        if delta < 0 || rand < exp(-delta / Tit)
+
+        if delta < 0 || rand < exp(-abs(delta) / Tit)
             percursoAtual = vizinho;
             custoAtual = custoVizinho;
         end
-
+    
         % Atualização do melhor percurso encontrado
         if custoAtual < melhorcusto
             melhorpercurso = percursoAtual;
             melhorcusto = custoAtual;
         end
         i = i + 1;
+        historico_probs = [historico_probs, exp(-abs(delta) / Tit)];
+        historico_temperatura = [historico_temperatura, Tit];
+        historico_custos = [historico_custos, custoAtual];
     end
     
     % Armazenar a temperatura atual e Custos atuais
@@ -138,21 +144,26 @@ figure;
 
 % Subplot 1: Evolução da temperatura
 subplot(2, 1, 1);
-plot(1:length(historico_temperatura), historico_temperatura, '-o', ...
-     'LineWidth', 1.5, 'Color', [0.85 0.33 0.1]);
-xlabel('Iterações');
+plot(1:length(historico_temperatura), historico_temperatura, '-o');
+xlabel('Iteração');
 ylabel('Temperatura');
-title('Evolução da Temperatura');
-grid on;
+title('Evolução de Temperatura');
 
 % Subplot 2: Evolução do custo
 subplot(2, 1, 2);
-plot(1:length(historico_custos), historico_custos, '-o', ...
-     'LineWidth', 1.5, 'Color', [0.1 0.6 0.2]);
+plot(1:length(historico_custos), historico_custos, '-o');
 xlabel('Iterações');
 ylabel('Custo Total do Percurso (em km)');
 title('Evolução do Custo');
 grid on;
+
+% Subplot 3: Evolução da probabilidade
+figure;
+plot(1:length(historico_probs), historico_probs, '-o');
+xlabel('Iterações');
+ylabel('Probabilidade atual');
+title('Evolução da Probabilidade');
+
 
 % Ajuste geral
 set(gca, 'FontSize', 10);
