@@ -70,6 +70,7 @@ x_max = x_evolucao(idx_max); % Identifica o valor correspondente de x no vetor x
 % Destacar o máximo no gráfico da função
 plot(x_max, f_max_value, '-o', 'MarkerSize', 10, ...
      'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'yellow'); % Destaca o ponto no gráfico inicial
+title('Gráfico da Função');
 
 % Gráfico da evolução de f(x) e x
 figure;

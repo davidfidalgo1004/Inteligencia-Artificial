@@ -1,35 +1,125 @@
 clc;
 clear all;
 close all;
-
-% Coordenadas das cidades
-coordenadas_cities = [ 
-    1 41.49 -6.45;  % Bragança
-    2 41.18 -7.45;  % Vila Real
-    3 41.44 -7.28;  % Chaves
-    4 41.27 -8.18;  % Guimarães
-    5 41.33 -8.26;  % Braga
-    6 41.42 -8.50;  % Viana do Castelo
-    7 42.02 -8.38;  % Valença
-    8 41.32 -8.37;  % Barcelos
-    9 41.11 -8.36;  % Porto
-    10 40.38 -8.39; % Aveiro
-    11 40.34 -8.27; % Águeda
-    12 40.39 -7.55; % Viseu
-    13 41.06 -7.49; % Lamego
-    14 41.10 -7.47; % Peso Régua
-];
-num_cidades = 14;
-R_Terra = 6371; %valor do raio da terra para calcular custo em km
-% Nomes das cidades
-nomes = { 'Bragança', 'Vila Real', 'Chaves', 'Guimarães', 'Braga', ...
-          'Viana do Castelo', 'Valença do Minho', 'Barcelos', 'Porto', ...
-          'Aveiro', 'Águeda', 'Viseu', 'Lamego', 'Peso da Régua' };
-
+fprintf("1->14 cidades\n2->20 cidades\n3->30 cidades\n")
+while true
+    opcao = input('Por favor, introduza uma opção (1 | 2 | 3): ');
+    if isnumeric(opcao) && ismember(opcao, [1, 2, 3])
+        break;
+    end
+end
+if opcao == 1
+    % Coordenadas das cidades
+    coordenadas_cities = [ 
+        1 41.49 -6.45;  % Bragança
+        2 41.18 -7.45;  % Vila Real
+        3 41.44 -7.28;  % Chaves
+        4 41.27 -8.18;  % Guimarães
+        5 41.33 -8.26;  % Braga
+        6 41.42 -8.50;  % Viana do Castelo
+        7 42.02 -8.38;  % Valença
+        8 41.32 -8.37;  % Barcelos
+        9 41.11 -8.36;  % Porto
+        10 40.38 -8.39; % Aveiro
+        11 40.34 -8.27; % Águeda
+        12 40.39 -7.55; % Viseu
+        13 41.06 -7.49; % Lamego
+        14 41.10 -7.47; % Peso Régua
+    ];
+    num_cidades = 14;
+    
+    % Nomes das cidades
+    nomes = { 'Bragança', 'Vila Real', 'Chaves', 'Guimarães', 'Braga', ...
+              'Viana do Castelo', 'Valença do Minho', 'Barcelos', 'Porto', ...
+              'Aveiro', 'Águeda', 'Viseu', 'Lamego', 'Peso da Régua' };
+    alpha = 0.96;         % Fator de redução da temperatura
+    iteracoes = 50;       % Iterações por temperatura
+end
+if opcao==2
+    % Coordenadas das cidades
+    coordenadas_cities = [ 
+        1 41.49 -6.45;  % Bragança
+        2 41.18 -7.45;  % Vila Real
+        3 41.44 -7.28;  % Chaves
+        4 41.42 -8.50;  % Viana do Castelo
+        5 41.33 -8.26;  % Braga
+        6 40.38 -8.39;  % Aveiro
+        7 41.11 -8.36;  % Porto
+        8 40.39 -7.55;  % Viseu
+        9 41.06 -7.49;  % Lamego
+        10 41.27 -8.18; % Guimarães
+        11 40.12 -8.25; % Coimbra
+        12 37.01 -7.56; % Faro
+        13 38.34 -7.54; % Évora
+        14 38.43 -9.10; % Lisboa
+        15 39.17 -7.26; % Portalegre
+        16 37.07 -7.39; % Tavira
+        17 37.00 -8.56; % Sagres
+        18 38.32 -8.54; % Setúbal
+        19 40.32 -7.16; % Guarda
+        20 39.14 -8.41; % Santarém
+    ];
+    num_cidades = 20;
+    
+    % Nomes das cidades
+    nomes = { 'Bragança', 'Vila Real', 'Chaves', 'Viana do Castelo', 'Braga', ...
+              'Aveiro', 'Porto', 'Viseu', 'Lamego', 'Guimarães', ...
+              'Coimbra', 'Faro', 'Évora', 'Lisboa', 'Portalegre', ...
+              'Tavira', 'Sagres', 'Setúbal', 'Guarda', 'Santarém' };
+    alpha = 0.98;         % Fator de redução da temperatura
+    iteracoes = 100;       % Iterações por temperatura
+end
+if opcao==3
+    % Coordenadas das cidades
+    coordenadas_cities = [ 
+        1 41.49 -6.45;  % Bragança
+        2 41.18 -7.45;  % Vila Real
+        3 41.44 -7.28;  % Chaves
+        4 41.42 -8.50;  % Viana do Castelo
+        5 41.33 -8.26;  % Braga
+        6 40.38 -8.39;  % Aveiro
+        7 41.11 -8.36;  % Porto
+        8 40.39 -7.55;  % Viseu
+        9 41.06 -7.49;  % Lamego
+        10 41.27 -8.18; % Guimarães
+        11 40.12 -8.25; % Coimbra
+        12 37.01 -7.56; % Faro
+        13 38.34 -7.54; % Évora
+        14 38.43 -9.10; % Lisboa
+        15 39.17 -7.26; % Portalegre
+        16 37.07 -7.39; % Tavira
+        17 37.00 -8.56; % Sagres
+        18 38.32 -8.54; % Setúbal
+        19 40.32 -7.16; % Guarda
+        20 39.14 -8.41; % Santarém
+        21 38.01 -7.52; % Beja
+        22 37.57 -8.52; % Sines
+        23 40.17 -7.30; % Covilhã
+        24 39.36 -8.25; % Tomar
+        25 40.34 -8.27; % Águeda
+        26 39.45 -8.48; % Leiria
+        27 39.49 -7.30; % Castelo Branco
+        28 38.53 -7.10; % Elvas
+        29 41.30 -6.16; % Miranda do Douro
+        30 38.48 -9.23; % Sintra
+    ];
+    num_cidades = 30;
+    
+    % Nomes das cidades
+    nomes = { 'Bragança', 'Vila Real', 'Chaves', 'Viana do Castelo', 'Braga', ...
+              'Aveiro', 'Porto', 'Viseu', 'Lamego', 'Guimarães', ...
+              'Coimbra', 'Faro', 'Évora', 'Lisboa', 'Portalegre', ...
+              'Tavira', 'Sagres', 'Setúbal', 'Guarda', 'Santarém', ...
+              'Beja', 'Sines', 'Covilhã', 'Tomar', 'Águeda', ...
+              'Leiria', 'Castelo Branco', 'Elvas', 'Miranda do Douro', 'Sintra' };
+    alpha = 0.97;         % Fator de redução da temperatura
+    iteracoes = 300;       % Iterações por temperatura
+end
 % Coordenadas em matriz
 cities = [coordenadas_cities(:, 2)'; coordenadas_cities(:, 3)'];
 
 % Distância Haversine (explicado relatorio)
+R_Terra = 6371; %valor do raio da terra para calcular custo em km
 distancia = @(c1, c2) 2 * R_Terra * ...
     asin(sqrt(sin((deg2rad(c2(1)) - deg2rad(c1(1))) / 2)^2 + ...
               cos(deg2rad(c1(1))) * cos(deg2rad(c2(1))) * ...
@@ -43,8 +133,7 @@ calculaCusto = @(percurso) sum(arrayfun(@(i) ...
 % Parâmetros do Simulated Annealing
 T_inicial = 90;       % Temperatura inicial
 T_final = 1e-3;       % Temperatura final
-alpha = 0.96;         % Fator de redução da temperatura
-iteracoes = 50;       % Iterações por temperatura
+
 
 % Inicialização
 percursoAtual = randperm(num_cidades);
@@ -71,11 +160,12 @@ while Tit > T_final
         custoVizinho = calculaCusto(vizinho);
 
         % Decisão de aceitação
+        % Decisão de aceitação
         delta = custoVizinho - custoAtual;
-
+        
         if delta < 0 || rand < exp(-abs(delta) / Tit)
-            percursoAtual = vizinho;
-            custoAtual = custoVizinho;
+            percursoAtual = unique(vizinho, 'stable'); % Garante que não há cidades repetidas
+            custoAtual = calculaCusto(percursoAtual);
         end
     
         % Atualização do melhor percurso encontrado
