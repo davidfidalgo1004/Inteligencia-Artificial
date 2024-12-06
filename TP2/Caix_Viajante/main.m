@@ -34,6 +34,7 @@ if opcao == 1
               'Aveiro', 'Águeda', 'Viseu', 'Lamego', 'Peso da Régua' };
     alpha = 0.96;         % Fator de redução da temperatura
     iteracoes = 50;       % Iterações por temperatura
+    T_inicial = 90;       % Temperatura inicial
 end
 if opcao==2
     % Coordenadas das cidades
@@ -68,6 +69,7 @@ if opcao==2
               'Tavira', 'Sagres', 'Setúbal', 'Guarda', 'Santarém' };
     alpha = 0.98;         % Fator de redução da temperatura
     iteracoes = 100;       % Iterações por temperatura
+    T_inicial = 90;       % Temperatura inicial
 end
 if opcao==3
     % Coordenadas das cidades
@@ -112,14 +114,15 @@ if opcao==3
               'Tavira', 'Sagres', 'Setúbal', 'Guarda', 'Santarém', ...
               'Beja', 'Sines', 'Covilhã', 'Tomar', 'Águeda', ...
               'Leiria', 'Castelo Branco', 'Elvas', 'Miranda do Douro', 'Sintra' };
-    alpha = 0.97;         % Fator de redução da temperatura
+    alpha = 0.98;         % Fator de redução da temperatura
     iteracoes = 300;       % Iterações por temperatura
+    T_inicial = 1000;       % Temperatura inicial
 end
 % Coordenadas em matriz
 cities = [coordenadas_cities(:, 2)'; coordenadas_cities(:, 3)'];
 
 % Distância Haversine (explicado relatorio)
-R_Terra = 6371; %valor do raio da terra para calcular custo em km
+R_Terra = 6376; %valor do raio da terra para calcular custo em km
 distancia = @(c1, c2) 2 * R_Terra * ...
     asin(sqrt(sin((deg2rad(c2(1)) - deg2rad(c1(1))) / 2)^2 + ...
               cos(deg2rad(c1(1))) * cos(deg2rad(c2(1))) * ...
@@ -131,11 +134,14 @@ calculaCusto = @(percurso) sum(arrayfun(@(i) ...
     1:num_cidades));
 
 % Parâmetros do Simulated Annealing
-T_inicial = 90;       % Temperatura inicial
+
 T_final = 1e-3;       % Temperatura final
 
-
-% Inicialização
+historico_temperatura = [];  % Vetor para guardar a temperatura ao longo das iterações
+historico_custos = []; 
+historico_probs=[];
+it=0;
+% Inicialização do percurso fixando a cidade inicial (cidade 1 como exemplo)
 percursoAtual = randperm(num_cidades);
 custoAtual = calculaCusto(percursoAtual);
 melhorpercurso = percursoAtual;
@@ -143,49 +149,62 @@ melhorcusto = custoAtual;
 
 % Iteradores
 Tit = T_inicial;
-
-historico_temperatura = [];  % Vetor para guardar a temperatura ao longo das iterações
-historico_custos = []; 
-historico_probs=[];
 it=0;
+% Loop principal
 while Tit > T_final
-    i = 0; % Certifique-se de inicializar o contador
+    i = 0;
     while i < iteracoes
-        % Geração de vizinho (troca de duas cidades aleatórias)
+        % Geração de vizinho mantendo a cidade inicial fixa
         vizinho = percursoAtual;
-        idx = randperm(num_cidades, 2);
+        idx = randperm(num_cidades-1, 2) + 1; % Evita a cidade inicial (fixa em 1)
         vizinho(idx) = vizinho(flip(idx));
-
-        % Cálculo do custo do vizinho
+        
         custoVizinho = calculaCusto(vizinho);
-
-        % Decisão de aceitação
-        % Decisão de aceitação
         delta = custoVizinho - custoAtual;
         
+        % Critério de aceitação
         if delta < 0 || rand < exp(-abs(delta) / Tit)
-            percursoAtual = unique(vizinho, 'stable'); % Garante que não há cidades repetidas
-            custoAtual = calculaCusto(percursoAtual);
+            percursoAtual = vizinho;
+            custoAtual = custoVizinho;
         end
-    
-        % Atualização do melhor percurso encontrado
+        
+        % Atualização do melhor percurso
         if custoAtual < melhorcusto
             melhorpercurso = percursoAtual;
             melhorcusto = custoAtual;
+            figure(1); clf;
+            plot(cities(2, percursoAtual), cities(1, percursoAtual), '-o', ...
+                'LineWidth', 1, 'Color', [0.2 0.2 0.8], 'MarkerSize', 6);
+            hold on;
+            plot([cities(2, percursoAtual(end)), cities(2, percursoAtual(1))], ...
+                 [cities(1, percursoAtual(end)), cities(1, percursoAtual(1))], '-', 'Color', [0.2 0.2 0.8]);
+            
+            for j = 1:num_cidades
+                text(cities(2, percursoAtual(j)), cities(1, percursoAtual(j)), ...
+                     nomes{percursoAtual(j)}, 'FontSize', 8, ...
+                     'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
+            end
+            
+            scatter(cities(2, percursoAtual(1)), cities(1, percursoAtual(1)), 100, 'r', 'filled');
+            title(sprintf('Iteração %d - Custo: %.2f km', it, custoAtual));
+            xlabel('Longitude');
+            ylabel('Latitude');
+            grid on; axis equal;
+            drawnow;
+            pause(1);
         end
-        i = i + 1;
+        
+        % Armazenamento de histórico
         historico_probs = [historico_probs, exp(-abs(delta) / Tit)];
         historico_temperatura = [historico_temperatura, Tit];
         historico_custos = [historico_custos, custoAtual];
+        i = i + 1;
+        it=it+1;
     end
     
-    % Armazenar a temperatura atual e Custos atuais
-    historico_temperatura = [historico_temperatura, Tit];
-    historico_custos = [historico_custos, custoAtual];
-    
-    % Atualização da temperatura
     Tit = Tit * alpha;
 end
+close all;
 
 
 
