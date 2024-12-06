@@ -1,11 +1,13 @@
-close all
-clear all
+clear;
+clc;
+close all;
+clear all;
 
 % Função
 f = @(x) 4*(sin(5*pi*x+0.5)).^6 .* exp(log2((x-0.8).^2));
 
 % Intervalo e visualização inicial
-x = linspace(0,1.6,1000);
+x = linspace(0,1.6,100000);
 y = f(x);
 figure(1)
 plot(x, y, 'b');
@@ -15,13 +17,16 @@ hold on;
 t = 1;
 Tmax = 90;        % Temperatura maxima sugerida nos powerpoints do prof
 T = Tmax;         % Temperatura inicial
-alfa = 0.94;      % Fator de decaimento, parece melhor em 0.96 aqui
+alfa = 0.94;      % Fator de decaimento, parece melhor em 0.94 aqui
 cicles = 300;     % Número de ciclos
 Tit = 5;          % Iterações por temperatura
 t_i = 1;          % Iterações do plot da temperatura
 x_t = rand * 1.6; % Solução inicial aleatória
 k = 0.8 * 1.6;    % Escalar do passo (tamanho máximo do primeiro passo)
-f_evolucao = zeros(cicles, 1); % Evolução da y
+x_max= x_t;        % maximo encontrado x
+y_max = f(x_t);       % maximo encontrado y
+f_evolucao = zeros(cicles, 1); % Evolução do x
+fy_evolucao = zeros(cicles, 1); % Evolução do y
 t_evolucao = zeros(cicles * Tit, 1); % Evolução da temperatura
 p_evolucao = zeros(cicles * Tit, 1); % Evolução da probabilidade
 
@@ -36,13 +41,16 @@ while t <= cicles
 
         if dE >= 0 || rand < p % Critérios de movimentação
             x_t = x_new; % se aceite muda
+
+        if f(x_t) > y_max
+            y_max = f(x_t);
+            x_max = x_t;
+        end
+    
         end
 
         f_evolucao(t) = x_t; % guarda x atual num array
-        if f(x_t) >= f(max(f_evolucao(t)))
-            max_t = x_t;
-        end
-
+        fy_evolucao(t) = f(x_t);
         plot(x_t, f(x_t), 'ro'); % Visualiza ponto atual
         n = n + 1;
         
@@ -56,7 +64,7 @@ while t <= cicles
 end
 
 plot(x_t, f(x_t), 'go'); % último ponto
-plot(max_t, f(max_t), 'ko'); % ponto máximo
+plot(x_max, y_max, 'ks', 'LineWidth', 2); % ponto máximo
 
 % Gráfico da evolução da função
 figure(2);
