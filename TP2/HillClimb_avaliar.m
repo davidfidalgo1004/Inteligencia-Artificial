@@ -1,45 +1,35 @@
-close all;
-clearvars -except iter f_results_hc_restart x_results_hc_restart convergence_rate_hc_restart variation_hc_restart;
+iter = 1; % Contador de iterações globais
+tolerancia = 0.01; % Tolerância para determinar convergência
+mve_x = zeros(100, 1); % Armazena os valores de x correspondentes ao máximo
+mve_y = zeros(100, 1); % Armazena os valores de y correspondentes ao máximo
 
-% Configurações gerais
-if ~exist('iter', 'var')
-    iter = 1; % Inicializar o contador de execuções se não existir
-end
+while iter <= 100
+    clc;
+    close all;
+    clearvars -except iter tolerancia mve_x mve_y; % Mantém as variáveis principais
 
-if ~exist('f_results_hc_restart', 'var')
-    f_results_hc_restart = []; % Armazena o melhor valor encontrado em cada execução
-    x_results_hc_restart = []; % Armazena o x correspondente em cada execução
-    convergence_rate_hc_restart = []; % Taxa de convergência em cada execução
-    variation_hc_restart = []; % Variação percentual em cada execução
-end
+    % Definição da função
+    f = @(x) 4*(sin(5*pi*x+0.5)).^6 .* exp(log2((x-0.8).^2));
 
-% Definição da função
-f = @(x) 4*(sin(5*pi*x+0.5)).^6 .* exp(log2((x-0.8).^2));
+    % Geração dos pontos para o gráfico da função
+    x = linspace(0, 1.6, 200); 
+    y = f(x);
+    figure(1)
+    plot(x, y, 'b');
+    hold on;
 
-% Geração dos pontos para o gráfico da função
-x = linspace(0, 1.6, 200); 
-y = f(x);
-plot(x, y, 'b');
-hold on;
+    % Configurações iniciais do Hill Climb
+    delta = 0.02; % Tamanho do passo
+    x_now = rand * 1.6; % Valor inicial aleatório para x
+    x_old = x_now; % Variável de comparação
 
-% Configurações do Hill Climb Restart
-num_total = 100; % Número total de reinícios
-num_tent = 1;    % Contador de reinícios
-delta = 0.02;    % Incremento para ajustes no x
-threshold = 0.95; % Limiar de convergência (95% do máximo teórico)
-f_tentativa = []; % Armazena os valores máximos em cada reinício
-f_evolucao = [];  % Para rastrear a evolução de f durante reinícios
-j = 1;
+    % Armazena os valores de evolução
+    f_evolucao = [];
+    x_evolucao = [];
+    iteracoes_convergentes = 0;
 
-% Loop principal: Reinicializações
-while num_tent <= num_total
-    i = 1;
-    x_now = rand * 1.6; % Ponto inicial aleatório
-    x_old = x_now;
-
-    % Loop de otimização
-    while i <= 300
-        valor_rand = (rand - 0.5) * delta;
+    for i = 1:300 % Número fixo de iterações do algoritmo Hill Climb
+        valor_rand = (rand - 0.5) * delta; % Gera valor aleatório para perturbação
         x_now = x_old + 2 * valor_rand;
 
         % Verifica se x_now está dentro do intervalo [0, 1.6]
@@ -54,68 +44,58 @@ while num_tent <= num_total
             x_old = x_now;
         end 
 
-        % Armazena a evolução de f(x)
-        f_evolucao(j) = f(x_old);
-        j = j + 1;
-        i = i + 1;
+        % Armazena os valores atuais
+        f_evolucao(i) = f(x_old);
+        x_evolucao(i) = x_old;
+
+        % Verifica convergência
+        if i > 1
+            taxa_convergencia = abs(f_evolucao(i) - f_evolucao(i - 1)) / abs(f_evolucao(i - 1));
+            if taxa_convergencia <= tolerancia
+                iteracoes_convergentes = iteracoes_convergentes + 1;
+            end
+        end
     end
 
-    % Armazena o valor final de f(x) após este reinício
-    f_tentativa(num_tent) = f(x_old);
-    num_tent = num_tent + 1;
+    % Identificar o valor máximo da função e o x correspondente
+    [f_max_value, idx_max] = max(f_evolucao); % Máximo da evolução
+    x_max = x_evolucao(idx_max);
+
+    % Salvar o melhor x e y desta execução
+    mve_x(iter) = x_max;
+    mve_y(iter) = f_max_value;
+
+    % Destacar o máximo no gráfico da função
+    plot(x_max, f_max_value, '-o', 'MarkerSize', 10, ...
+         'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'yellow'); % Ponto máximo
+    title('Hill Climb - Gráfico da Função');
+    iter = iter + 1;
 end
 
-% Cálculos de Métricas
-f_max = max(f_tentativa); % Melhor valor encontrado
-f_mean = mean(f_tentativa); % Média dos valores
-f_min = min(f_tentativa); % Pior valor encontrado
-num_restarts = num_total; % Número de reinícios realizados
-convergence_rate = (sum(f_tentativa >= threshold * max(y)) / num_total) * 100; % Taxa de Convergência (%)
-variation = (std(f_tentativa) / f_mean) * 100; % Variação (%)
+% Resultados finais agregados
+melhor_y = max(mve_y);
+melhor_x = mve_x(mve_y == melhor_y);
 
-% Destacar o máximo no gráfico da função
-[f_max_value, idx_max] = max(f_evolucao); % Encontra o máximo em f_evolucao
-x_max = x(idx_max); % Identifica o valor correspondente de x no vetor x_evolucao
-plot(x_max, f_max_value, '-o', 'MarkerSize', 10, ...
-     'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'yellow'); % Destaca o ponto no gráfico inicial
-title(sprintf('Execução %d - Gráfico da Função', iter));
+pior_y = min(mve_y);
+pior_x = mve_x(mve_y == pior_y);
 
-% Gráfico da evolução de f(x) máximo
-figure;
-plot(1:num_total, f_tentativa, '-o'); % Plota os valores máximos por reinício
-hold on;
-[f_max_tent, idx_max_tent] = max(f_tentativa); % Máximo dos testes
-plot(idx_max_tent, f_max_tent, '-o', 'MarkerSize', 10, ...
-     'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'yellow');
-xlabel('Número Teste');
-ylabel('f(x) max');
-title('Evolução f(x) a cada teste');
-legend('f(x)', 'Máximo Encontrado', 'Location', 'Best');
-hold off;
+media_y = mean(mve_y);
+media_x = mean(mve_x);
 
-% Armazenar resultados finais da execução atual
-f_results_hc_restart(iter) = f_max; % Melhor valor de f
-x_results_hc_restart(iter) = x_max; % Melhor valor de x correspondente
-convergence_rate_hc_restart(iter) = convergence_rate; % Taxa de convergência
-variation_hc_restart(iter) = variation; % Variação percentual
+% Taxa de convergência (%)
+iteracoes_totais = 300 * 100; % 300 iterações por execução, 100 execuções
+taxa_convergencia_percentual = (sum(abs(mve_y - melhor_y) / melhor_y <= tolerancia) / length(mve_y)) * 100;
 
-% Incrementar o contador e preparar para a próxima execução
-iter = iter + 1;
+% Variação (%)
+variancia_x = var(mve_x);
+variancia_y = var(mve_y);
+varxp = (sqrt(variancia_x) / mean(mve_x)) * 100;
+varyp = (sqrt(variancia_y) / mean(mve_y)) * 100;
+variacao_percentual = (varxp + varyp) / 2;
 
-% Resultados acumulados
-fprintf('\n---- Resultados da Execução %d ----\n', iter - 1);
-fprintf('Melhor Valor Encontrado: %.4f\n', f_max);
-fprintf('Média dos Valores: %.4f\n', f_mean);
-fprintf('Pior Valor Encontrado: %.4f\n', f_min);
-fprintf('Número de Reinícios: %d\n', num_restarts);
-fprintf('Taxa de Convergência: %.2f%%\n', convergence_rate);
-fprintf('Variação: %.2f%%\n', variation);
-
-% Mensagem ao usuário
-disp('Execução concluída! Execute novamente para rodar outra iteração.');
-disp('Use "clearvars -except iter f_results_hc_restart x_results_hc_restart convergence_rate_hc_restart variation_hc_restart" para limpar antes de nova execução.');
-disp('Resultados até agora:');
-fprintf('Melhores valores f(x): [%s]\n', num2str(f_results_hc_restart));
-fprintf('Melhores valores x: [%s]\n', num2str(x_results_hc_restart));
-fprintf('Taxas de Convergência: [%s]\n', num2str(convergence_rate_hc_restart));
-fprintf('Variações: [%s]\n', num2str(variation_hc_restart));
+% Exibição dos resultados
+fprintf('Melhor Valor Encontrado: (x = %.4f, y = %.4f)\n', melhor_x, melhor_y);
+fprintf('Média dos Valores: (x = %.4f, y = %.4f)\n', media_x, media_y);
+fprintf('Pior Valor Encontrado: (x = %.4f, y = %.4f)\n', pior_x, pior_y);
+fprintf('Taxa de Convergência: %.2f%%\n', taxa_convergencia_percentual);
+fprintf('Variação: %.2f%%\n', variacao_percentual);
