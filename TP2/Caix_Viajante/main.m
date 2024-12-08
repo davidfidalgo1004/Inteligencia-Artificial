@@ -121,7 +121,7 @@ end
 % Coordenadas em matriz
 cities = [coordenadas_cities(:, 2)'; coordenadas_cities(:, 3)'];
 
-% Distância Haversine (explicado relatorio)
+% Distância Haversine 
 R_Terra = 6376; %valor do raio da terra para calcular custo em km
 distancia = @(c1, c2) 2 * R_Terra * ...
     asin(sqrt(sin((deg2rad(c2(1)) - deg2rad(c1(1))) / 2)^2 + ...
@@ -191,7 +191,6 @@ while Tit > T_final
             ylabel('Latitude');
             grid on; axis equal;
             drawnow;
-            pause(1);
         end
         
         % Armazenamento de histórico
